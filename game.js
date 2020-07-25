@@ -110,19 +110,26 @@ class Block {
                     break;
                 }
             case "down":
-                if((block.locked==0)&&(block.position.y+block.solid.length<20)){
-                    block.position.y++;
-                    break;
-                }
-                else{
-                    block.locked=1;
-                }
+                block.position.y++;
+                break;
         }
     }
     rotate(){
     }
     drop(){}
     draw(){
+        block.solid.forEach((element,index) => {
+            element.forEach((element2,index2) => {
+                try{
+                    if((grid[block.position.y+index+1][Math.floor(block.position.x)+index2-1].locked)&&(element2==1)){
+                        block.locked=1;
+                    }
+                }
+                catch{
+                    block.locked=1;
+                }
+            })
+        });
         for(let y=0;y<block.solid.length;y++){
             for(let x=0;x<block.solid[y].length;x++){
                 switch(block.solid[y][x]){
@@ -143,6 +150,23 @@ class Block {
                 }
             }
         }
+        //     switch(element){
+        //         case 1:
+        //             try{
+        //                 if(grid[parseInt(block.position.y)+parseInt(y)][Math.floor(block.position.x)+parseInt(x)-1].type!=""){
+        //                     grid[parseInt(block.position.y)+parseInt(y)][Math.floor(block.position.x)+parseInt(x)-1].locked=1;
+        //                     block.locked=1;
+        //                     break;
+        //                 }
+        //                 else{
+        //                     grid[parseInt(block.position.y)+parseInt(y)][Math.floor(block.position.x)+parseInt(x)-1].type=block.type;
+        //                 }
+        //             }
+        //             finally{
+        //                 break;
+        //             }
+        //     }
+        // });
     }
     undraw(){
         if(!block.locked){
@@ -250,8 +274,13 @@ block = new Block;
 async function startGame(){
     while(!block.locked){
         await sleep(speed);
-        draw()
-        block.move("down");
+        draw();
+        if((!block.locked)&&(block.position.y+block.solid.length<20)){
+            block.move("down");
+        }
+        else{
+            block.locked=1;
+        }
     }
     draw();
     block = new Block;
