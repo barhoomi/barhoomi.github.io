@@ -25,8 +25,10 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function transposeArray(array, arrayLength){
+function transposeArray(array){
     var newArray = [];
+    let arrayLength = array.length;
+
     for(var i = 0; i < array.length; i++){
         newArray.push([]);
     };
@@ -40,12 +42,12 @@ function transposeArray(array, arrayLength){
 
 const tetromino = [
 {type:"I",grid:[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],color:"cyan",center:{x:1.5,y:1.5}},
-// {type:"O",grid:[[0,1,1,0],[0,1,1,0],[0,0,0,0]],color:"yellow",center:{x:1.5,y:0.5}},
-// {type:"T",grid:[[0,1,0],[1,1,1],[0,0,0]],color:"purple",center:{x:1,y:1}},
-// {type:"S",grid:[[0,1,1],[1,1,0],[0,0,0]],color:"lime",center:{x:1,y:1}},
-// {type:"Z",grid:[[1,1,0],[0,1,1],[0,0,0]],color:"red",center:{x:1,y:1}},
-// {type:"J",grid:[[1,0,0],[1,1,1],[0,0,0]],color:"blue",center:{x:1,y:1}},
-// {type:"L",grid:[[0,0,1],[1,1,1],[0,0,0]],color:"orange",center:{x:1,y:1}},
+{type:"O",grid:[[0,1,1,0],[0,1,1,0],[0,0,0,0]],color:"yellow",center:{x:1.5,y:0.5}},
+{type:"T",grid:[[0,1,0],[1,1,1],[0,0,0]],color:"purple",center:{x:1,y:1}},
+{type:"S",grid:[[0,1,1],[1,1,0],[0,0,0]],color:"lime",center:{x:1,y:1}},
+{type:"Z",grid:[[1,1,0],[0,1,1],[0,0,0]],color:"red",center:{x:1,y:1}},
+{type:"J",grid:[[1,0,0],[1,1,1],[0,0,0]],color:"blue",center:{x:1,y:1}},
+{type:"L",grid:[[0,0,1],[1,1,1],[0,0,0]],color:"orange",center:{x:1,y:1}},
 ];
 
 var queue = [];
@@ -62,7 +64,7 @@ function addQueue(){
 function getSolid(array){
     for(let y = 0;y<array.length;y++){
         function checkZero(x){
-            return x == 0;
+            return (x == 0)||(x==undefined);
         }
         let empty = array[y].every(checkZero);
         if(empty==1){
@@ -70,26 +72,19 @@ function getSolid(array){
             y--;
         }
     }
-    {
+    for(let i=0;i<array.length;i++){
         let sum = 0;
         for(let y in array){
-            sum += array[y][0];
-        }
-        if(sum===0){
-            for(let y in array){
-                array[y].shift();
-            }
-        }
-        sum = 0;
-        for(let y in array){
-            sum += array[y][array[y].length-1];
+            sum += array[y][i];
         }
         if(sum == 0){
             for(let y in array){
-                array[y].pop();
+                array[y].splice(i,1)
             }
+            i--;
         }
     }
+    console.log(array)
     return array;
 }
 
@@ -98,11 +93,10 @@ class Block {
     constructor(){
         addQueue();
         this.tetromino = queue.shift();
+        this.type = this.tetromino.type;
         this.center = this.tetromino.center;
         this.position = {x:4.5,y:0}
-        this.type = this.tetromino.type;
         this.grid = [...this.tetromino.grid];
-        this.rotation = 0;
         this.locked = false;
         this.solid = [...this.grid];
         this.solid = getSolid(this.solid);
@@ -113,67 +107,60 @@ class Block {
     move(dir){
         switch(dir){
             case "left":
-                block.position.x-=(Math.floor(block.position.x)>1);
-                console.log(block.position.x);
+                this.position.x-=(Math.floor(this.position.x)>1);
                 break;
             case "right":
-                // (Math.floor(block.position.x)-block.solid[0].length>0);
-                block.position.x+=(Math.floor(block.position.x)+block.solid[0].length<=10);
+                // (Math.floor(this.position.x)-this.solid[0].length>0);
+                this.position.x+=(Math.floor(this.position.x)+this.solid[0].length<=10);
                 break;
             case "down":
-                block.position.y++;
+                this.position.y++;
                 break;
         }
     }
     rotate(dir){
         switch(dir){
             case "cw":
-                this.grid = transposeArray(this.grid,this.grid.length);
+                this.grid = [...transposeArray(this.grid)];
                 for(let y = 0;y<this.grid.length;y++){
                     this.grid[y].reverse();
                 }
-                this.rotation+=90;
                 break;
             case "ccw":
                 for(let y = 0;y<this.grid.length;y++){
                     this.grid[y].reverse();
                 }
-                this.grid = transposeArray(this.grid,this.grid.length);
-                this.rotation-=90;
+                this.grid = [...transposeArray(this.grid)];
                 break;
         }
-        if(this.rotation==360){
-            this.rotation=0;
-        }
-        this.solid = [...this.grid];
-        this.solid = getSolid(this.solid,this.solid.length);
+        this.solid = getSolid([...this.grid]);
     }
     drop(){}
     draw(){
         this.solid.forEach((element,index) => {
             element.forEach((element2,index2) => {
                 try{
-                    if((grid[block.position.y+index+1][Math.floor(block.position.x)+index2-1].locked)&&(element2==1)){
-                        block.locked=1;
+                    if((grid[this.position.y+index+1][Math.floor(this.position.x)+index2-1].locked)&&(element2==1)){
+                        this.locked=1;
                     }
                 }
                 catch{
-                    block.locked=1;
+                    this.locked=1;
                 }
             })
         });
-        for(let y=0;y<block.solid.length;y++){
-            for(let x=0;x<block.solid[y].length;x++){
-                switch(block.solid[y][x]){
+        for(let y=0;y<this.solid.length;y++){
+            for(let x=0;x<this.solid[y].length;x++){
+                switch(this.solid[y][x]){
                     case 1:
                         try{
-                            if(grid[parseInt(block.position.y)+parseInt(y)][Math.floor(block.position.x)+parseInt(x)-1].type!=""){
-                                grid[parseInt(block.position.y)+parseInt(y)][Math.floor(block.position.x)+parseInt(x)-1].locked=1;
-                                block.locked=1;
+                            if(grid[parseInt(this.position.y)+parseInt(y)][Math.floor(this.position.x)+parseInt(x)-1].type!=""){
+                                grid[parseInt(this.position.y)+parseInt(y)][Math.floor(this.position.x)+parseInt(x)-1].locked=1;
+                                this.locked=1;
                                 break;
                             }
                             else{
-                                grid[parseInt(block.position.y)+parseInt(y)][Math.floor(block.position.x)+parseInt(x)-1].type=block.type;
+                                grid[parseInt(this.position.y)+parseInt(y)][Math.floor(this.position.x)+parseInt(x)-1].type=this.type;
                             }
                         }
                         finally{
@@ -184,13 +171,13 @@ class Block {
         }
     }
     undraw(){
-        if(!block.locked){
-            for(let y=0;y<block.solid.length;y++){
-                for(let x=0;x<block.solid[y].length;x++){
-                    switch(block.solid[y][x]){
+        if(!this.locked){
+            for(let y=0;y<this.solid.length;y++){
+                for(let x=0;x<this.solid[y].length;x++){
+                    switch(this.solid[y][x]){
                         case 1:
                             try{
-                                grid[parseInt(block.position.y)+parseInt(y)][Math.floor(block.position.x)+parseInt(x)-1].type="";
+                                grid[parseInt(this.position.y)+parseInt(y)][Math.floor(this.position.x)+parseInt(x)-1].type="";
                             }
                             finally{
                                 break;
@@ -267,6 +254,13 @@ var handleKeyDown = function (event){
         case " ":
             block.drop();
             break;
+        case "p":
+            if(speed<10000){
+                speed = 1000000;
+            }
+            else{
+                speed = 140;
+            }
     }
 };  
 
