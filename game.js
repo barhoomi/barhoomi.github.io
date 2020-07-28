@@ -3,7 +3,8 @@ canvas = document.querySelector('.canvas')
 var ctx = canvas.getContext('2d');
 var scale = 30;
 var speed = 140;
-var delay = 0;
+var score = 0;
+var totallines = 0;
 
 
 var yoff = 0;
@@ -116,6 +117,7 @@ class Block {
                 break;
         }
         this.solid = this.getSolid([...this.grid]);
+        draw();
     }
     drop(){
         while(block.locked==0){
@@ -304,12 +306,10 @@ var handleKeyDown = function (event){
         case "w": 
         case "ArrowUp":
             block.rotate("cw");
-            delay += 70;
             break;
         case "a":
         case "ArrowLeft":
             block.move("left");
-            delay += 70;
             break;
         case "s": 
         case "ArrowDown":
@@ -318,7 +318,6 @@ var handleKeyDown = function (event){
         case "d": 
         case "ArrowRight":
             block.move("right");
-            delay += 70;
             break;
         case " ":
             block.drop();
@@ -345,28 +344,25 @@ var handleKeyUp = function (event){
         case "ArrowDown":
             speed = 140;
             break;
-        case "w": 
-        case "ArrowUp":
-        case "a":
-        case "ArrowLeft":
-        case "d":
-        case "ArrowRight":
-            delay = 0;
     }
 };  
 
 function clearLines(){
-    let lines = 0;
-    for(let y in grid){
+    let lines=0; 
+    for(let y=0;y<grid.length;y++){
         let total = 0;
         for(let x in grid[y]){
             total += grid[y][x].locked;
         }
-        if(total == 10){
+        if(total==10){
             lines += 1;
+            grid.splice(y,1);
+            grid.unshift([{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0}]);
+            y--;
         }
     }
-    console.log(lines);
+    totallines+=lines;
+    score+=(lines**2)*10;
 }
 
 
@@ -377,7 +373,7 @@ block = new Block;
 
 async function startGame(){
     while(!block.locked){
-        await sleep(speed+delay);
+        await sleep(speed);
         draw();
         if((!block.locked)&&(block.position.y+block.solid.length<20)){
             block.move("down");
