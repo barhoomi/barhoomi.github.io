@@ -6,11 +6,7 @@ var speed = 140;
 var delay = 0;
 
 
-var yabove = 0;
-var ybelow = 0;
 var yoff = 0;
-var xleft = 0;
-var xright = 0;
 var xoff = 0;
 
 
@@ -121,7 +117,23 @@ class Block {
         }
         this.solid = this.getSolid([...this.grid]);
     }
-    drop(){}
+    drop(){
+        while(block.locked==0){
+            block.move("down");
+            this.solid.forEach((element,index) => {
+                element.forEach((element2,index2) => {
+                    try{
+                        if((grid[this.position.y+index+1][Math.floor(this.position.x)+index2-1].locked)&&(element2==1)){
+                            this.locked=1;
+                        }
+                    }
+                    catch{
+                        this.locked=1;
+                    }
+                })
+            });
+        }
+    }
     draw(){
         this.solid.forEach((element,index) => {
             element.forEach((element2,index2) => {
@@ -182,11 +194,12 @@ class Block {
             this.position.y-=yoff;
         }
 
-        yabove = 0;
-        ybelow = 0;
+        let yabove = 0;
+        let ybelow = 0;
+        let xleft = 0;
+        let xright = 0;
+
         yoff = 0;
-        xleft = 0;
-        xright = 0;
         xoff = 0;
         for(let y = 0;y<array.length;y++){
             let empty = array[y].every(checkZero);
@@ -226,7 +239,6 @@ class Block {
         }
         array = transposeArray(array);
 
-        console.log("x right: ",xright,"x left: ",xleft);
         if(yabove>ybelow){
             if(ybelow > 0){
                 yoff = ybelow - yabove;
@@ -267,14 +279,15 @@ function draw(){
     block.draw();
     for(y in grid){
         for(x in grid[y]){
+            ctx.strokeStyle = "rgba(0,0,0,0.5)";
             switch(grid[y][x].type){
-                case "I": ctx.fillStyle = "cyan"; ctx.fillRect(x*scale,y*scale,scale,scale);break;
-                case "O": ctx.fillStyle = "yellow"; ctx.fillRect(x*scale,y*scale,scale,scale); break;
-                case "T": ctx.fillStyle = "purple"; ctx.fillRect(x*scale,y*scale,scale,scale); break;
-                case "S": ctx.fillStyle = "lime"; ctx.fillRect(x*scale,y*scale,scale,scale); break;
-                case "Z": ctx.fillStyle = "red"; ctx.fillRect(x*scale,y*scale,scale,scale); break;
-                case "J": ctx.fillStyle = "blue"; ctx.fillRect(x*scale,y*scale,scale,scale); break;
-                case "L": ctx.fillStyle = "orange"; ctx.fillRect(x*scale,y*scale,scale,scale); break;
+                case "I": ctx.fillStyle = "cyan"; ctx.fillRect(x*scale,y*scale,scale-1,scale-1); ctx.lineWidth = 1; ctx.strokeRect(x*scale,y*scale,scale,scale); break;
+                case "O": ctx.fillStyle = "yellow"; ctx.fillRect(x*scale,y*scale,scale-1,scale-1); ctx.lineWidth = 1; ctx.strokeRect(x*scale,y*scale,scale,scale); break;
+                case "T": ctx.fillStyle = "purple"; ctx.fillRect(x*scale,y*scale,scale-1,scale-1); ctx.lineWidth = 1; ctx.strokeRect(x*scale,y*scale,scale,scale); break;
+                case "S": ctx.fillStyle = "lime"; ctx.fillRect(x*scale,y*scale,scale-1,scale-1); ctx.lineWidth = 1; ctx.strokeRect(x*scale,y*scale,scale,scale); break;
+                case "Z": ctx.fillStyle = "red"; ctx.fillRect(x*scale,y*scale,scale-1,scale-1); ctx.lineWidth = 1; ctx.strokeRect(x*scale,y*scale,scale,scale); break;
+                case "J": ctx.fillStyle = "blue"; ctx.fillRect(x*scale,y*scale,scale-1,scale-1); ctx.lineWidth = 1; ctx.strokeRect(x*scale,y*scale,scale,scale); break;
+                case "L": ctx.fillStyle = "orange"; ctx.fillRect(x*scale,y*scale,scale-1,scale-1); ctx.lineWidth = 1; ctx.strokeRect(x*scale,y*scale,scale,scale); break;
                 case "": ctx.fillStyle = "#252525"; ctx.fillRect(x*scale,y*scale,scale,scale); ctx.fillStyle = "black"; ctx.fillRect(x*scale,y*scale,scale-1,scale-1); break;
             };
         }
@@ -287,7 +300,6 @@ var paused=1;
 
 var handleKeyDown = function (event){
     keyValue = event.key;
-    
     switch(keyValue){
         case "w": 
         case "ArrowUp":
@@ -343,6 +355,20 @@ var handleKeyUp = function (event){
     }
 };  
 
+function clearLines(){
+    let lines = 0;
+    for(let y in grid){
+        let total = 0;
+        for(let x in grid[y]){
+            total += grid[y][x].locked;
+        }
+        if(total == 10){
+            lines += 1;
+        }
+    }
+    console.log(lines);
+}
+
 
 window.addEventListener('keydown', handleKeyDown, false);
 window.addEventListener('keyup', handleKeyUp, false);
@@ -361,8 +387,18 @@ async function startGame(){
         }
     }
     draw();
+    clearLines();
     block = new Block;
+    for(i in grid[0]){
+        if(grid[0][i].locked){
+            gameOver();
+        }
+    }
     startGame();
+}
+
+function gameOver(){
+    alert("Game Over");
 }
 
 startGame();
