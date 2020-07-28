@@ -3,6 +3,7 @@ canvas = document.querySelector('.canvas')
 var ctx = canvas.getContext('2d');
 var scale = 30;
 var speed = 140;
+var delay = 0;
 // GENERAL FUNCTIONS
 function shuffle(array) {
     var currentIndex = array.length, temporaryValue, randomIndex;
@@ -25,29 +26,33 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function checkZero(x){
+    return (x == 0);
+}
+
 function transposeArray(array){
     var newArray = [];
-    let arrayLength = array.length;
-
-    for(var i = 0; i < array.length; i++){
+    for(var i = 0; i < array[0].length; i++){
         newArray.push([]);
     };
+
     for(var i = 0; i < array.length; i++){
-        for(var j = 0; j < arrayLength; j++){
+        for(var j = 0; j < array[0].length; j++){
             newArray[j].push(array[i][j]);
         };
     };
+
     return newArray;
 }
 
 const tetromino = [
-{type:"I",grid:[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],color:"cyan",center:{x:1.5,y:1.5}},
-{type:"O",grid:[[0,1,1,0],[0,1,1,0],[0,0,0,0]],color:"yellow",center:{x:1.5,y:0.5}},
-{type:"T",grid:[[0,1,0],[1,1,1],[0,0,0]],color:"purple",center:{x:1,y:1}},
-{type:"S",grid:[[0,1,1],[1,1,0],[0,0,0]],color:"lime",center:{x:1,y:1}},
-{type:"Z",grid:[[1,1,0],[0,1,1],[0,0,0]],color:"red",center:{x:1,y:1}},
-{type:"J",grid:[[1,0,0],[1,1,1],[0,0,0]],color:"blue",center:{x:1,y:1}},
-{type:"L",grid:[[0,0,1],[1,1,1],[0,0,0]],color:"orange",center:{x:1,y:1}},
+{type:"I",grid:[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],center:{x:1.5,y:1.5}},
+// {type:"O",grid:[[0,1,1,0],[0,1,1,0],[0,0,0,0]],center:{x:1.5,y:0.5}},
+// {type:"T",grid:[[0,1,0],[1,1,1],[0,0,0]],center:{x:1,y:1}},
+// {type:"S",grid:[[0,1,1],[1,1,0],[0,0,0]],center:{x:1,y:1}},
+// {type:"Z",grid:[[1,1,0],[0,1,1],[0,0,0]],center:{x:1,y:1}},
+// {type:"J",grid:[[1,0,0],[1,1,1],[0,0,0]],center:{x:1,y:1}},
+// {type:"L",grid:[[0,0,1],[1,1,1],[0,0,0]],center:{x:1,y:1}},
 ];
 
 var queue = [];
@@ -61,33 +66,6 @@ function addQueue(){
     }
 }
 
-function getSolid(array){
-    for(let y = 0;y<array.length;y++){
-        function checkZero(x){
-            return (x == 0)||(x==undefined);
-        }
-        let empty = array[y].every(checkZero);
-        if(empty==1){
-            array.splice(y,1);
-            y--;
-        }
-    }
-    for(let i=0;i<array.length;i++){
-        let sum = 0;
-        for(let y in array){
-            sum += array[y][i];
-        }
-        if(sum == 0){
-            for(let y in array){
-                array[y].splice(i,1)
-            }
-            i--;
-        }
-    }
-    console.log(array)
-    return array;
-}
-
 
 class Block {
     constructor(){
@@ -98,8 +76,7 @@ class Block {
         this.position = {x:4.5,y:0}
         this.grid = [...this.tetromino.grid];
         this.locked = false;
-        this.solid = [...this.grid];
-        this.solid = getSolid(this.solid);
+        this.solid = this.getSolid([...this.grid]);
         if(this.type=="O"){
             this.position.x = 5.5;
         }
@@ -110,7 +87,6 @@ class Block {
                 this.position.x-=(Math.floor(this.position.x)>1);
                 break;
             case "right":
-                // (Math.floor(this.position.x)-this.solid[0].length>0);
                 this.position.x+=(Math.floor(this.position.x)+this.solid[0].length<=10);
                 break;
             case "down":
@@ -121,19 +97,19 @@ class Block {
     rotate(dir){
         switch(dir){
             case "cw":
-                this.grid = [...transposeArray(this.grid)];
+                this.grid = transposeArray(this.grid);
                 for(let y = 0;y<this.grid.length;y++){
-                    this.grid[y].reverse();
+                    this.grid[y]=this.grid[y].reverse();
                 }
                 break;
             case "ccw":
                 for(let y = 0;y<this.grid.length;y++){
                     this.grid[y].reverse();
                 }
-                this.grid = [...transposeArray(this.grid)];
+                this.grid = transposeArray(this.grid);
                 break;
         }
-        this.solid = getSolid([...this.grid]);
+        this.solid = this.getSolid([...this.grid]);
     }
     drop(){}
     draw(){
@@ -187,37 +163,67 @@ class Block {
             }
         }
     }
+    getSolid(array){
+        let yoffset = 0;
+        let xoffset = 0;
+
+        for(let y = 0;y<array.length;y++){
+            let empty = array[y].every(checkZero);
+            if(empty){
+                if(y<Math.floor(this.center.y)){
+                    yoffset++;
+                }
+            }
+        }
+        array = transposeArray(array);
+        for(let y = 0;y<array.length;y++){
+            let empty = array[y].every(checkZero);
+            if(empty){
+                if(y<this.center.x){
+                    xoffset++;
+                }
+                else if(y>this.center.x){
+                    xoffset--;
+                }
+
+            }
+        }
+        array = transposeArray(array);
+        
+        for(let y = 0;y<array.length;y++){
+            let empty = array[y].every(checkZero);
+            array.splice(y,empty);
+            y-=empty;
+        }
+        array = transposeArray(array);
+        for(let y = 0;y<array.length;y++){
+            let empty = array[y].every(checkZero);
+            array.splice(y,empty);
+            y-=empty;
+        }
+        array = transposeArray(array);
+
+        console.log("x: ",xoffset,"y: ",yoffset);
+        this.position.x+=xoffset;
+        this.position.y+=yoffset;
+        return array;
+    }
 }
 
-var grid = [
-    [{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0}],
-    [{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0}],
-    [{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0}],
-    [{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0}],
-    [{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0}],
-    [{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0}],
-    [{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0}],
-    [{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0}],
-    [{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0}],
-    [{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0}],
-    [{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0}],
-    [{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0}],
-    [{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0}],
-    [{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0}],
-    [{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0}],
-    [{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0}],
-    [{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0}],
-    [{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0}],
-    [{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0}],
-    [{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0}],
-]
+var grid = [];
+for(let i=0;i<20;i++){
+    grid.push([]);
+    for(let j=0;j<10;j++){
+        grid[i].push({type:"",locked:0});
+    }
+};
 
 function draw(){
     block.draw();
     for(y in grid){
         for(x in grid[y]){
             switch(grid[y][x].type){
-                case "I": ctx.fillStyle = "cyan"; ctx.fillRect(x*scale,y*scale,scale,scale); break;
+                case "I": ctx.fillStyle = "cyan"; ctx.fillRect(x*scale,y*scale,scale,scale);break;
                 case "O": ctx.fillStyle = "yellow"; ctx.fillRect(x*scale,y*scale,scale,scale); break;
                 case "T": ctx.fillStyle = "purple"; ctx.fillRect(x*scale,y*scale,scale,scale); break;
                 case "S": ctx.fillStyle = "lime"; ctx.fillRect(x*scale,y*scale,scale,scale); break;
@@ -231,17 +237,22 @@ function draw(){
     block.undraw();
 };
 
+var paused=1;
+
 
 var handleKeyDown = function (event){
     keyValue = event.key;
+    
     switch(keyValue){
         case "w": 
         case "ArrowUp":
             block.rotate("cw");
+            delay += 70;
             break;
         case "a":
         case "ArrowLeft":
             block.move("left");
+            delay += 70;
             break;
         case "s": 
         case "ArrowDown":
@@ -250,16 +261,22 @@ var handleKeyDown = function (event){
         case "d": 
         case "ArrowRight":
             block.move("right");
+            delay += 70;
             break;
         case " ":
             block.drop();
             break;
         case "p":
-            if(speed<10000){
-                speed = 1000000;
-            }
-            else{
-                speed = 140;
+            switch(paused){
+                case 1:
+                    paused = 0;
+                    speed=100000000;
+                    break;
+                case 0:
+                    paused = 1;
+                    speed = 140;
+                    startGame();
+                    break;
             }
     }
 };  
@@ -271,6 +288,13 @@ var handleKeyUp = function (event){
         case "ArrowDown":
             speed = 140;
             break;
+        case "w": 
+        case "ArrowUp":
+        case "a":
+        case "ArrowLeft":
+        case "d":
+        case "ArrowRight":
+            delay = 0;
     }
 };  
 
@@ -282,7 +306,7 @@ block = new Block;
 
 async function startGame(){
     while(!block.locked){
-        await sleep(speed);
+        await sleep(speed+delay);
         draw();
         if((!block.locked)&&(block.position.y+block.solid.length<20)){
             block.move("down");
