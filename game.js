@@ -4,6 +4,16 @@ var ctx = canvas.getContext('2d');
 var scale = 30;
 var speed = 140;
 var delay = 0;
+
+
+var yabove = 0;
+var ybelow = 0;
+var yoff = 0;
+var xleft = 0;
+var xright = 0;
+var xoff = 0;
+
+
 // GENERAL FUNCTIONS
 function shuffle(array) {
     var currentIndex = array.length, temporaryValue, randomIndex;
@@ -47,12 +57,12 @@ function transposeArray(array){
 
 const tetromino = [
 {type:"I",grid:[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],center:{x:1.5,y:1.5}},
-// {type:"O",grid:[[0,1,1,0],[0,1,1,0],[0,0,0,0]],center:{x:1.5,y:0.5}},
-// {type:"T",grid:[[0,1,0],[1,1,1],[0,0,0]],center:{x:1,y:1}},
-// {type:"S",grid:[[0,1,1],[1,1,0],[0,0,0]],center:{x:1,y:1}},
-// {type:"Z",grid:[[1,1,0],[0,1,1],[0,0,0]],center:{x:1,y:1}},
-// {type:"J",grid:[[1,0,0],[1,1,1],[0,0,0]],center:{x:1,y:1}},
-// {type:"L",grid:[[0,0,1],[1,1,1],[0,0,0]],center:{x:1,y:1}},
+{type:"O",grid:[[1,1],[1,1]],center:{x:0.5,y:0.5}},
+{type:"T",grid:[[0,1,0],[1,1,1],[0,0,0]],center:{x:1,y:1}},
+{type:"S",grid:[[0,1,1],[1,1,0],[0,0,0]],center:{x:1,y:1}},
+{type:"Z",grid:[[1,1,0],[0,1,1],[0,0,0]],center:{x:1,y:1}},
+{type:"J",grid:[[1,0,0],[1,1,1],[0,0,0]],center:{x:1,y:1}},
+{type:"L",grid:[[0,0,1],[1,1,1],[0,0,0]],center:{x:1,y:1}},
 ];
 
 var queue = [];
@@ -164,14 +174,28 @@ class Block {
         }
     }
     getSolid(array){
-        let yoffset = 0;
-        let xoffset = 0;
 
+        if(xoff!=undefined&&(this.position.y!=0)){
+            this.position.x-=xoff;
+        }
+        if(yoff!=undefined&&(this.position.y!=0)){
+            this.position.y-=yoff;
+        }
+
+        yabove = 0;
+        ybelow = 0;
+        yoff = 0;
+        xleft = 0;
+        xright = 0;
+        xoff = 0;
         for(let y = 0;y<array.length;y++){
             let empty = array[y].every(checkZero);
             if(empty){
-                if(y<Math.floor(this.center.y)){
-                    yoffset++;
+                if(y>this.center.y){
+                    ybelow++;
+                }
+                else if(y<this.center.y){
+                    yabove++;
                 }
             }
         }
@@ -179,17 +203,16 @@ class Block {
         for(let y = 0;y<array.length;y++){
             let empty = array[y].every(checkZero);
             if(empty){
-                if(y<this.center.x){
-                    xoffset++;
+                if(y>this.center.x){
+                    xright++;
                 }
-                else if(y>this.center.x){
-                    xoffset--;
+                else if(y<this.center.x){
+                    xleft++;
                 }
-
             }
         }
         array = transposeArray(array);
-        
+
         for(let y = 0;y<array.length;y++){
             let empty = array[y].every(checkZero);
             array.splice(y,empty);
@@ -203,9 +226,31 @@ class Block {
         }
         array = transposeArray(array);
 
-        console.log("x: ",xoffset,"y: ",yoffset);
-        this.position.x+=xoffset;
-        this.position.y+=yoffset;
+        console.log("x right: ",xright,"x left: ",xleft);
+        if(yabove>ybelow){
+            if(ybelow > 0){
+                yoff = ybelow - yabove;
+            }
+        }
+        if(xright > xleft){
+            if(xleft > 0){
+                xoff = xright-xleft;
+            }
+            else{
+                xoff = xright-xleft-1;
+            }
+        }
+        else if(xleft > xright){
+            if(xright > 0){
+                xoff = xleft-xright+1;
+            }
+            else{
+                xoff = xleft-xright;
+            }
+            
+        }
+        this.position.y+=yoff;
+        this.position.x+=xoff;
         return array;
     }
 }
