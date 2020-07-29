@@ -6,7 +6,6 @@ var speed = 140;
 var score = 0;
 var totallines = 0;
 
-
 var yoff = 0;
 var xoff = 0;
 
@@ -87,6 +86,7 @@ class Block {
         if(this.type=="O"){
             this.position.x = 5.5;
         }
+        this.holding = 0;
     }
     move(dir){
         switch(dir){
@@ -134,6 +134,26 @@ class Block {
                     }
                 })
             });
+        }
+    }
+    hold(){
+        if((this.holding==0)&&(held.holding==0)){
+            switch(holding){
+                case 1:
+                    let temp = block;
+                    block = held;
+                    held = temp;
+                    held.position = {x:4.5,y:0};
+                    break;
+                case 0:
+                    held = block;
+                    held.position = {x:4.5,y:0};
+                    block = new Block;
+                    holding = 1;
+                    break;
+            }
+            this.holding=1;
+            held.holding=1;
         }
     }
     draw(){
@@ -334,6 +354,10 @@ var handleKeyDown = function (event){
                     startGame();
                     break;
             }
+            break;
+        case "c":
+            block.hold();
+            break;
     }
 };  
 
@@ -370,6 +394,8 @@ window.addEventListener('keydown', handleKeyDown, false);
 window.addEventListener('keyup', handleKeyUp, false);
 
 block = new Block;
+var holding = 0;
+var held = block;
 
 async function startGame(){
     while(!block.locked){
@@ -385,16 +411,13 @@ async function startGame(){
     draw();
     clearLines();
     block = new Block;
+    held.holding=0;
     for(i in grid[0]){
         if(grid[0][i].locked){
-            gameOver();
+            alert(`Game Over | Score: ${score}`);
         }
     }
     startGame();
-}
-
-function gameOver(){
-    alert("Game Over");
 }
 
 startGame();
