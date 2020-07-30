@@ -5,6 +5,7 @@ var scale = 30;
 var speed = 140;
 var score = 0;
 var totallines = 0;
+var paused = 0;
 
 var yoff = 0;
 var xoff = 0;
@@ -53,12 +54,12 @@ function transposeArray(array){
 
 const tetromino = [
 {type:"I",grid:[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],center:{x:1.5,y:1.5}},
-{type:"O",grid:[[1,1],[1,1]],center:{x:0.5,y:0.5}},
-{type:"T",grid:[[0,1,0],[1,1,1],[0,0,0]],center:{x:1,y:1}},
-{type:"S",grid:[[0,1,1],[1,1,0],[0,0,0]],center:{x:1,y:1}},
-{type:"Z",grid:[[1,1,0],[0,1,1],[0,0,0]],center:{x:1,y:1}},
-{type:"J",grid:[[1,0,0],[1,1,1],[0,0,0]],center:{x:1,y:1}},
-{type:"L",grid:[[0,0,1],[1,1,1],[0,0,0]],center:{x:1,y:1}},
+// {type:"O",grid:[[1,1],[1,1]],center:{x:0.5,y:0.5}},
+// {type:"T",grid:[[0,1,0],[1,1,1],[0,0,0]],center:{x:1,y:1}},
+// {type:"S",grid:[[0,1,1],[1,1,0],[0,0,0]],center:{x:1,y:1}},
+// {type:"Z",grid:[[1,1,0],[0,1,1],[0,0,0]],center:{x:1,y:1}},
+// {type:"J",grid:[[1,0,0],[1,1,1],[0,0,0]],center:{x:1,y:1}},
+// {type:"L",grid:[[0,0,1],[1,1,1],[0,0,0]],center:{x:1,y:1}},
 ];
 
 var queue = [];
@@ -91,10 +92,36 @@ class Block {
     move(dir){
         switch(dir){
             case "left":
-                this.position.x-=(Math.floor(this.position.x)>1);
+                let validL = 1;
+                for(let y=0;y<this.solid.length;y++){
+                    for(let x=0;x<this.solid[y].length;x++){
+                        try{
+                            if(grid[this.position.y+y][Math.floor(this.position.x)+x-2].locked){
+                                validL = 0;
+                            }
+                        }
+                        catch{
+                            validL = 0;
+                        }
+                    }
+                }
+                this.position.x-=validL;
                 break;
             case "right":
-                this.position.x+=(Math.floor(this.position.x)+this.solid[0].length<=10);
+                let validR = 1;
+                for(let y=0;y<this.solid.length;y++){
+                    for(let x=0;x<this.solid[y].length;x++){
+                        try{
+                            if(grid[this.position.y+y][Math.floor(this.position.x)+x].locked){
+                                validR = 0;
+                            }
+                        }
+                        catch{
+                            validR = 0;
+                        }
+                    }
+                }
+                this.position.x+=validR;
                 break;
             case "down":
                 this.position.y++;
@@ -104,24 +131,38 @@ class Block {
     rotate(dir){
         switch(dir){
             case "cw":
-                this.grid = transposeArray(this.grid);
-                for(let y = 0;y<this.grid.length;y++){
-                    this.grid[y]=this.grid[y].reverse();
+                let validCW = 1;
+                let newgrid = transposeArray([...this.grid]);
+                for(let y = 0;y<newgrid.length;y++){
+                    newgrid[y]=newgrid[y].reverse();
+                }
+                let newsolid = this.getSolid([...newgrid]);
+                for(let y=0;y<newsolid.length;y++){
+                    for(let x=0;x<newsolid[y].length;x++){
+                        try{
+                            if(grid[this.position.y+y][Math.floor(this.position.x-this.center.x+x)].locked){
+                                validCW=0;
+                            }
+                        }
+                        catch{
+                            validCW=0;
+                        }
+                    }
+                }
+                if(validCW==1){
+                    this.grid = [...newgrid];
+                    this.solid = [...newsolid];
+                }
+                else{
+                    this.solid = this.getSolid([...this.grid])
                 }
                 break;
             case "ccw":
-                for(let y = 0;y<this.grid.length;y++){
-                    this.grid[y].reverse();
-                }
-                this.grid = transposeArray(this.grid);
                 break;
         }
-        this.solid = this.getSolid([...this.grid]);
-        draw();
     }
     drop(){
-        while(block.locked==0){
-            block.move("down");
+        while(this.locked==0){
             this.solid.forEach((element,index) => {
                 element.forEach((element2,index2) => {
                     try{
@@ -134,6 +175,9 @@ class Block {
                     }
                 })
             });
+            if(this.locked==0){
+                block.move("down");
+            }
         }
     }
     hold(){
@@ -317,48 +361,48 @@ function draw(){
     block.undraw();
 };
 
-var paused=1;
-
 
 var handleKeyDown = function (event){
     keyValue = event.key;
     switch(keyValue){
         case "w": 
         case "ArrowUp":
-            block.rotate("cw");
+            if(!paused){
+                block.rotate("cw");
+            }
             break;
         case "a":
         case "ArrowLeft":
-            block.move("left");
+            if(!paused){
+                block.move("left");
+            }
             break;
         case "s": 
         case "ArrowDown":
-            speed = 70;
+            if(!paused){
+                speed = 70;
+            }
             break;
         case "d": 
         case "ArrowRight":
-            block.move("right");
-            break;
-        case " ":
-            block.drop();
-            break;
-        case "p":
-            switch(paused){
-                case 1:
-                    paused = 0;
-                    speed=100000000;
-                    break;
-                case 0:
-                    paused = 1;
-                    speed = 140;
-                    startGame();
-                    break;
+            if(!paused){
+                block.move("right");
             }
             break;
-        case "c":
-            block.hold();
+        case " ":
+            if(!paused){
+                block.drop();
+            }
             break;
-    }
+        case "p":
+            paused=!paused;
+            break;
+        case "c":
+            if(!paused){
+                block.hold();
+            }
+            break;
+    };
 };  
 
 var handleKeyUp = function (event){
@@ -400,12 +444,14 @@ var held = block;
 async function startGame(){
     while(!block.locked){
         await sleep(speed);
-        draw();
-        if((!block.locked)&&(block.position.y+block.solid.length<20)){
-            block.move("down");
-        }
-        else{
-            block.locked=1;
+        if(!paused){
+            draw();
+            if((!block.locked)&&(block.position.y+block.solid.length<20)){
+                block.move("down");
+            }
+            else{
+                block.locked=1;
+            }
         }
     }
     draw();
