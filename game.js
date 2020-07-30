@@ -305,41 +305,18 @@ class Block {
         }
         array = transposeArray(array);
 
-        if(yabove>ybelow){
-            if(ybelow > 0){
-                yoff = ybelow - yabove;
-            }
-        }
-        if(xright > xleft){
-            if(xleft > 0){
-                xoff = xright-xleft;
-            }
-            else{
-                xoff = xright-xleft-1;
-            }
-        }
-        else if(xleft > xright){
-            if(xright > 0){
-                xoff = xleft-xright+1;
-            }
-            else{
-                xoff = xleft-xright;
-            }
-            
-        }
+        (yabove>ybelow)&&(ybelow>0)?yoff = ybelow - yabove:0;
+        (xright>xleft)? (xleft>0)? xoff = xright-xleft : xoff = xright-xleft-1 : 0;
+        (xleft>xright)? (xright>0)? xoff = xleft-xright+1 : xoff = xleft-xright : 0; 
+
         this.position.y+=yoff;
         this.position.x+=xoff;
+
         return array;
     }
 }
 
-var grid = [];
-for(let i=0;i<20;i++){
-    grid.push([]);
-    for(let j=0;j<10;j++){
-        grid[i].push({type:"",locked:0});
-    }
-};
+var grid = Array(20).fill(Array(10).fill({type:"",locked:0}));
 
 function draw(){
     block.draw();
@@ -451,19 +428,23 @@ async function startGame(){
             }
             else{
                 block.locked=1;
-            }
+            }  
         }
     }
     draw();
     clearLines();
     block = new Block;
     held.holding=0;
+    gameOver();
+    startGame();
+}
+
+function gameOver(){
     for(i in grid[0]){
         if(grid[0][i].locked){
             alert(`Game Over | Score: ${score}`);
         }
     }
-    startGame();
 }
 
 startGame();
