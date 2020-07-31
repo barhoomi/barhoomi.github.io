@@ -2,7 +2,7 @@
 canvas = document.querySelector('.canvas')
 var ctx = canvas.getContext('2d');
 var scale = 30;
-var speed = 140;
+var speed = 250;
 var score = 0;
 var totallines = 0;
 var paused = 0;
@@ -52,14 +52,76 @@ function transposeArray(array){
     return newArray;
 }
 
+function checkBelow(context){
+    let locked = 0;
+    context.solid.forEach((element,index) => {
+        element.forEach((element2,index2) => {
+            try{
+                if((grid[context.position.y+index+1][Math.floor(context.position.x)+index2-1].locked)&&(element2==1)){
+                    locked=1;
+                }
+            }
+            catch{
+                locked=1;
+            }
+        })
+    });
+    context.locked = locked;
+}
+
+// Keyboard input with customisable repeat (set to 0 for no key repeat)
+//
+function KeyboardController(keys, repeat) {
+    // Lookup of key codes to timer ID, or null for no repeat
+    //
+    var timers= {};
+
+    // When key is pressed and we don't already think it's pressed, call the
+    // key action callback and set a timer to generate another one after a delay
+    //
+    document.onkeydown= function(event) {
+        var key= (event || window.event).keyCode;
+        if (!(key in keys))
+            return true;
+        if (!(key in timers)) {
+            timers[key]= null;
+            keys[key]();
+            if (repeat!==0)
+                timers[key]= setInterval(keys[key], repeat);
+        }
+        return false;
+    };
+
+    // Cancel timeout and mark key as released on keyup
+    //
+    document.onkeyup= function(event) {
+        var key= (event || window.event).keyCode;
+        if (key in timers) {
+            if (timers[key]!==null)
+                clearInterval(timers[key]);
+            delete timers[key];
+        }
+    };
+
+    // When window is unfocused we may not get key events. To prevent this
+    // causing a key to 'get stuck down', cancel all held keys
+    //
+    window.onblur= function() {
+        for (key in timers)
+            if (timers[key]!==null)
+                clearInterval(timers[key]);
+        timers= {};
+    };
+};
+
 const tetromino = [
 {type:"I",grid:[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],center:{x:1.5,y:1.5}},
-// {type:"O",grid:[[1,1],[1,1]],center:{x:0.5,y:0.5}},
-// {type:"T",grid:[[0,1,0],[1,1,1],[0,0,0]],center:{x:1,y:1}},
-// {type:"S",grid:[[0,1,1],[1,1,0],[0,0,0]],center:{x:1,y:1}},
-// {type:"Z",grid:[[1,1,0],[0,1,1],[0,0,0]],center:{x:1,y:1}},
-// {type:"J",grid:[[1,0,0],[1,1,1],[0,0,0]],center:{x:1,y:1}},
-// {type:"L",grid:[[0,0,1],[1,1,1],[0,0,0]],center:{x:1,y:1}},
+{type:"O",grid:[[1,1],[1,1]],center:{x:0.5,y:0.5}},
+{type:"T",grid:[[0,1,0],[1,1,1],[0,0,0]],center:{x:1,y:1}},
+{type:"S",grid:[[0,1,1],[1,1,0],[0,0,0]],center:{x:1,y:1}},
+{type:"Z",grid:[[1,1,0],[0,1,1],[0,0,0]],center:{x:1,y:1}},
+{type:"J",grid:[[1,0,0],[1,1,1],[0,0,0]],center:{x:1,y:1}},
+{type:"L",grid:[[0,0,1],[1,1,1],[0,0,0]],center:{x:1,y:1}},
 ];
 
 var queue = [];
@@ -82,7 +144,7 @@ class Block {
         this.center = this.tetromino.center;
         this.position = {x:4.5,y:0}
         this.grid = [...this.tetromino.grid];
-        this.locked = false;
+        this.locked = 0;
         this.solid = this.getSolid([...this.grid]);
         if(this.type=="O"){
             this.position.x = 5.5;
@@ -105,7 +167,9 @@ class Block {
                         }
                     }
                 }
-                this.position.x-=validL;
+                if(!block.locked){
+                    this.position.x-=validL;
+                }
                 break;
             case "right":
                 let validR = 1;
@@ -121,10 +185,15 @@ class Block {
                         }
                     }
                 }
-                this.position.x+=validR;
+                if(!block.locked){
+                    this.position.x+=validR;
+                }
                 break;
             case "down":
-                this.position.y++;
+                checkBelow(this);
+                if(!block.locked){
+                    this.position.y++;
+                }
                 break;
         }
     }
@@ -163,21 +232,7 @@ class Block {
     }
     drop(){
         while(this.locked==0){
-            this.solid.forEach((element,index) => {
-                element.forEach((element2,index2) => {
-                    try{
-                        if((grid[this.position.y+index+1][Math.floor(this.position.x)+index2-1].locked)&&(element2==1)){
-                            this.locked=1;
-                        }
-                    }
-                    catch{
-                        this.locked=1;
-                    }
-                })
-            });
-            if(this.locked==0){
-                block.move("down");
-            }
+            this.move("down");
         }
     }
     hold(){
@@ -201,30 +256,18 @@ class Block {
         }
     }
     draw(){
-        this.solid.forEach((element,index) => {
-            element.forEach((element2,index2) => {
-                try{
-                    if((grid[this.position.y+index+1][Math.floor(this.position.x)+index2-1].locked)&&(element2==1)){
-                        this.locked=1;
-                    }
-                }
-                catch{
-                    this.locked=1;
-                }
-            })
-        });
         for(let y=0;y<this.solid.length;y++){
             for(let x=0;x<this.solid[y].length;x++){
                 switch(this.solid[y][x]){
                     case 1:
                         try{
-                            if(grid[parseInt(this.position.y)+parseInt(y)][Math.floor(this.position.x)+parseInt(x)-1].type!=""){
-                                grid[parseInt(this.position.y)+parseInt(y)][Math.floor(this.position.x)+parseInt(x)-1].locked=1;
+                            if(grid[this.position.y+y][Math.floor(this.position.x)+x-1].type!=""){
+                                grid[this.position.y+y][Math.floor(this.position.x)+x-1].locked=1;
                                 this.locked=1;
                                 break;
                             }
-                            else{
-                                grid[parseInt(this.position.y)+parseInt(y)][Math.floor(this.position.x)+parseInt(x)-1].type=this.type;
+                            if(grid[this.position.y+y][Math.floor(this.position.x)+x-1].type==""){
+                                grid[this.position.y+y][Math.floor(this.position.x)+x-1].type=this.type;
                             }
                         }
                         finally{
@@ -241,7 +284,7 @@ class Block {
                     switch(this.solid[y][x]){
                         case 1:
                             try{
-                                grid[parseInt(this.position.y)+parseInt(y)][Math.floor(this.position.x)+parseInt(x)-1].type="";
+                                grid[this.position.y+y][Math.floor(this.position.x)+x-1].type="";
                             }
                             finally{
                                 break;
@@ -338,7 +381,6 @@ function draw(){
     block.undraw();
 };
 
-
 var handleKeyDown = function (event){
     keyValue = event.key;
     switch(keyValue){
@@ -349,19 +391,17 @@ var handleKeyDown = function (event){
             }
             break;
         case "a":
-        case "ArrowLeft":
             if(!paused){
                 block.move("left");
             }
             break;
-        case "s": 
+        case "s":
         case "ArrowDown":
             if(!paused){
                 speed = 70;
             }
             break;
         case "d": 
-        case "ArrowRight":
             if(!paused){
                 block.move("right");
             }
@@ -387,7 +427,7 @@ var handleKeyUp = function (event){
     switch(keyValue){
         case "s":
         case "ArrowDown":
-            speed = 140;
+            speed = 250;
             break;
     }
 };  
@@ -418,25 +458,30 @@ block = new Block;
 var holding = 0;
 var held = block;
 
+KeyboardController({
+    37: function(){if(!paused){block.move("left"),draw()}},
+    65: function(){if(!paused){block.move("left"),draw()}},
+    39: function(){if(!paused){block.move("right"),draw()}},
+    68: function(){if(!paused){block.move("right"),draw()}},
+}, 150);
+
 async function startGame(){
+    draw();
     while(!block.locked){
         await sleep(speed);
         if(!paused){
+            block.move("down");
             draw();
-            if((!block.locked)&&(block.position.y+block.solid.length<20)){
-                block.move("down");
-            }
-            else{
-                block.locked=1;
-            }  
         }
     }
-    draw();
-    clearLines();
-    block = new Block;
-    held.holding=0;
-    gameOver();
-    startGame();
+    if(block.locked){
+        draw();
+        clearLines();
+        block = new Block;
+        held.holding=0;
+        gameOver();
+        startGame();
+    }
 }
 
 function gameOver(){
@@ -446,5 +491,6 @@ function gameOver(){
         }
     }
 }
+
 
 startGame();
