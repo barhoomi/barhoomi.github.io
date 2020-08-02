@@ -2,10 +2,17 @@ body{
     padding:0;
     margin:0;
     background-color: rgb(0, 0, 0);
+    box-sizing: border-box;
+}
+@font-face{
+    font-family: pixel;
+    src: url(./joystix\ monospace.ttf);
 }
 
 
+
 .screen{
+    z-index: 1;
     display: flex;
     justify-content: center;
 }
@@ -13,4 +20,22 @@ body{
 .canvas{
     margin-top:10vh;
     border:white 3px solid;
+}
+
+.sprites{
+    display:none;
+}
+
+.hold{
+    margin-left: 25vw;
+    margin-top: 10vh;
+    padding-bottom: 15vh;
+    padding-right: 5vw;
+    display: flex;
+    font-size: 1.8vw;
+    font-family: pixel;
+    color: white;
+    position: absolute;
+    border: 2px white solid;
+    align-content: center;
 }

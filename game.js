@@ -3,12 +3,25 @@ canvas = document.querySelector('.canvas')
 var ctx = canvas.getContext('2d');
 var scale = 30;
 var speed = 250;
-var score = 0;
-var totallines = 0;
+var score = -4000;
+var totallines = -20;
 var paused = 0;
 
 var yoff = 0;
 var xoff = 0;
+
+//Sprites
+
+let redBlock = document.getElementById("red");
+let blueBlock = document.getElementById("blue");
+let purpleBlock = document.getElementById("purple");
+let cyanBlock = document.getElementById("cyan");
+let greenBlock = document.getElementById("green");
+let orangeBlock = document.getElementById("orange");
+let yellowBlock = document.getElementById("yellow");
+let emptyBlock = document.getElementById("empty");
+
+ctx.imageSmoothingEnabled = false;
 
 
 // GENERAL FUNCTIONS
@@ -52,7 +65,7 @@ function transposeArray(array){
     return newArray;
 }
 
-function checkBelow(context){
+async function checkBelow(context){
     let locked = 0;
     context.solid.forEach((element,index) => {
         element.forEach((element2,index2) => {
@@ -167,7 +180,7 @@ class Block {
                         }
                     }
                 }
-                if(!block.locked){
+                if(!this.locked){
                     this.position.x-=validL;
                 }
                 break;
@@ -185,7 +198,7 @@ class Block {
                         }
                     }
                 }
-                if(!block.locked){
+                if(!this.locked){
                     this.position.x+=validR;
                 }
                 break;
@@ -218,12 +231,14 @@ class Block {
                         }
                     }
                 }
-                if(validCW==1){
-                    this.grid = [...newgrid];
-                    this.solid = [...newsolid];
-                }
-                else{
-                    this.solid = this.getSolid([...this.grid])
+                if(!this.locked){
+                    if(validCW==1){
+                        this.grid = [...newgrid];
+                        this.solid = [...newsolid];
+                    }
+                    else{
+                        this.solid = this.getSolid([...this.grid])
+                    }
                 }
                 break;
             case "ccw":
@@ -263,7 +278,7 @@ class Block {
                         try{
                             if(grid[this.position.y+y][Math.floor(this.position.x)+x-1].type!=""){
                                 grid[this.position.y+y][Math.floor(this.position.x)+x-1].locked=1;
-                                this.locked=1;
+                                this.locked = 1;
                                 break;
                             }
                             if(grid[this.position.y+y][Math.floor(this.position.x)+x-1].type==""){
@@ -365,16 +380,15 @@ function draw(){
     block.draw();
     for(y in grid){
         for(x in grid[y]){
-            ctx.strokeStyle = "rgba(0,0,0,0.5)";
             switch(grid[y][x].type){
-                case "I": ctx.fillStyle = "cyan"; ctx.fillRect(x*scale,y*scale,scale-1,scale-1); ctx.lineWidth = 1; ctx.strokeRect(x*scale,y*scale,scale,scale); break;
-                case "O": ctx.fillStyle = "yellow"; ctx.fillRect(x*scale,y*scale,scale-1,scale-1); ctx.lineWidth = 1; ctx.strokeRect(x*scale,y*scale,scale,scale); break;
-                case "T": ctx.fillStyle = "purple"; ctx.fillRect(x*scale,y*scale,scale-1,scale-1); ctx.lineWidth = 1; ctx.strokeRect(x*scale,y*scale,scale,scale); break;
-                case "S": ctx.fillStyle = "lime"; ctx.fillRect(x*scale,y*scale,scale-1,scale-1); ctx.lineWidth = 1; ctx.strokeRect(x*scale,y*scale,scale,scale); break;
-                case "Z": ctx.fillStyle = "red"; ctx.fillRect(x*scale,y*scale,scale-1,scale-1); ctx.lineWidth = 1; ctx.strokeRect(x*scale,y*scale,scale,scale); break;
-                case "J": ctx.fillStyle = "blue"; ctx.fillRect(x*scale,y*scale,scale-1,scale-1); ctx.lineWidth = 1; ctx.strokeRect(x*scale,y*scale,scale,scale); break;
-                case "L": ctx.fillStyle = "orange"; ctx.fillRect(x*scale,y*scale,scale-1,scale-1); ctx.lineWidth = 1; ctx.strokeRect(x*scale,y*scale,scale,scale); break;
-                case "": ctx.fillStyle = "#252525"; ctx.fillRect(x*scale,y*scale,scale,scale); ctx.fillStyle = "black"; ctx.fillRect(x*scale,y*scale,scale-1,scale-1); break;
+                case "I": ctx.drawImage(cyanBlock,x*scale,y*scale,30,30); break;
+                case "O": ctx.drawImage(yellowBlock,x*scale,y*scale,30,30); break;
+                case "T": ctx.drawImage(purpleBlock,x*scale,y*scale,30,30); break;
+                case "S": ctx.drawImage(redBlock,x*scale,y*scale,30,30); break;
+                case "Z": ctx.drawImage(greenBlock,x*scale,y*scale,30,30); break;
+                case "J": ctx.drawImage(blueBlock,x*scale,y*scale,30,30); break;
+                case "L": ctx.drawImage(orangeBlock,x*scale,y*scale,30,30); break;
+                case "": ctx.drawImage(emptyBlock,x*scale,y*scale,30,30); break;
             };
         }
     };
@@ -491,6 +505,5 @@ function gameOver(){
         }
     }
 }
-
 
 startGame();
