@@ -10,6 +10,8 @@ var score = 0;
 var totalLines = 0;
 var holding = null;
 
+var pauseCountDownRunning = 0;
+
 //Sprites
 
 let redBlock = document.getElementById("red");
@@ -300,7 +302,30 @@ var handleKeyDown = function (event){
             }
             break;
         case "p":
-            paused=!paused;
+            if(pauseCountDownRunning==0){
+                if(paused){
+                    pauseCountDownRunning = 1;
+                    document.querySelector(".paused p").style.display = "none";
+                    document.querySelector(".paused h1").innerHTML = "3"
+                    setTimeout(function(){document.querySelector(".paused h1").innerHTML = "2";}, 1000);
+                    setTimeout(function(){document.querySelector(".paused h1").innerHTML = "1";}, 2000);
+                    setTimeout(function(){
+                        document.querySelector(".paused").style.display = "none";
+                        document.querySelector(".canvas").style.filter = "brightness(1)";
+                        paused = !paused;
+                        pauseCountDownRunning = 0;
+                    }, 3000);
+                }
+                else{
+                    pauseCountDownRunning = 1;
+                    document.querySelector(".paused h1").innerHTML = "Paused"
+                    document.querySelector(".paused").style.display = "inline";
+                    document.querySelector(".paused p").style.display = "inline";
+                    document.querySelector(".canvas").style.filter = "brightness(0.5)"
+                    paused = !paused;
+                    pauseCountDownRunning = 0;
+                }
+            }
             break;
         case "c":
             if(!paused){
