@@ -1,14 +1,14 @@
 // CANVAS SETUP
 canvas = document.querySelector('.canvas')
 var ctx = canvas.getContext('2d');
-var scale = 30;
+ctx.scale(30,30);
+
 var speed = 250;
-var score = -4000;
-var totallines = -20;
 var paused = 0;
 
-var yoff = 0;
-var xoff = 0;
+var score = 0;
+var totalLines = 0;
+var holding = null;
 
 //Sprites
 
@@ -46,10 +46,6 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function checkZero(x){
-    return (x == 0);
-}
-
 function transposeArray(array){
     var newArray = [];
     for(var i = 0; i < array[0].length; i++){
@@ -64,24 +60,6 @@ function transposeArray(array){
 
     return newArray;
 }
-
-async function checkBelow(context){
-    let locked = 0;
-    context.solid.forEach((element,index) => {
-        element.forEach((element2,index2) => {
-            try{
-                if((grid[context.position.y+index+1][Math.floor(context.position.x)+index2-1].locked)&&(element2==1)){
-                    locked=1;
-                }
-            }
-            catch{
-                locked=1;
-            }
-        })
-    });
-    context.locked = locked;
-}
-
 // Keyboard input with customisable repeat (set to 0 for no key repeat)
 //
 function KeyboardController(keys, repeat) {
@@ -155,245 +133,151 @@ class Block {
         this.tetromino = queue.shift();
         this.type = this.tetromino.type;
         this.center = this.tetromino.center;
-        this.position = {x:4.5,y:0}
+        this.pos = {x:4.5,y:0}
         this.grid = [...this.tetromino.grid];
         this.locked = 0;
-        this.solid = this.getSolid([...this.grid]);
-        if(this.type=="O"){
-            this.position.x = 5.5;
+        this.swapped = 0;
+        if(this.type=="I"){
+            this.pos.x = 3.5;
         }
-        this.holding = 0;
-    }
-    move(dir){
-        switch(dir){
-            case "left":
-                let validL = 1;
-                for(let y=0;y<this.solid.length;y++){
-                    for(let x=0;x<this.solid[y].length;x++){
-                        try{
-                            if(grid[this.position.y+y][Math.floor(this.position.x)+x-2].locked){
-                                validL = 0;
-                            }
-                        }
-                        catch{
-                            validL = 0;
-                        }
-                    }
+    };
+    addToGrid(type){
+        this.grid.forEach((row,y)=>{
+            row.forEach((item,x)=>{
+                if(item == 1){
+                    grid[this.pos.y+y][Math.floor(this.pos.x)+x].type=type;
+                };
+            });
+        });
+    };
+    collide(){
+        let c = 0;
+        this.grid.forEach((row,y)=>{
+            row.forEach((item,x)=>{
+                try{
+                    if(item == 1&&grid[this.pos.y+y][Math.floor(this.pos.x)+x].type!==""){
+                        c = 1;
+                    };
                 }
-                if(!this.locked){
-                    this.position.x-=validL;
+                catch{
+                    c = 1;
                 }
-                break;
-            case "right":
-                let validR = 1;
-                for(let y=0;y<this.solid.length;y++){
-                    for(let x=0;x<this.solid[y].length;x++){
-                        try{
-                            if(grid[this.position.y+y][Math.floor(this.position.x)+x].locked){
-                                validR = 0;
-                            }
-                        }
-                        catch{
-                            validR = 0;
-                        }
-                    }
-                }
-                if(!this.locked){
-                    this.position.x+=validR;
-                }
-                break;
-            case "down":
-                checkBelow(this);
-                if(!block.locked){
-                    this.position.y++;
-                }
-                break;
-        }
-    }
-    rotate(dir){
-        switch(dir){
-            case "cw":
-                let validCW = 1;
-                let newgrid = transposeArray([...this.grid]);
-                for(let y = 0;y<newgrid.length;y++){
-                    newgrid[y]=newgrid[y].reverse();
-                }
-                let newsolid = this.getSolid([...newgrid]);
-                for(let y=0;y<newsolid.length;y++){
-                    for(let x=0;x<newsolid[y].length;x++){
-                        try{
-                            if(grid[this.position.y+y][Math.floor(this.position.x-this.center.x+x)].locked){
-                                validCW=0;
-                            }
-                        }
-                        catch{
-                            validCW=0;
-                        }
-                    }
-                }
-                if(!this.locked){
-                    if(validCW==1){
-                        this.grid = [...newgrid];
-                        this.solid = [...newsolid];
-                    }
-                    else{
-                        this.solid = this.getSolid([...this.grid])
-                    }
-                }
-                break;
-            case "ccw":
-                break;
-        }
-    }
+            });
+        });
+        return c;
+    };
     drop(){
-        while(this.locked==0){
+        while(this.collide()==0){
             this.move("down");
         }
-    }
+    };
     hold(){
-        if((this.holding==0)&&(held.holding==0)){
-            switch(holding){
-                case 1:
-                    let temp = block;
-                    block = held;
-                    held = temp;
-                    held.position = {x:4.5,y:0};
-                    break;
-                case 0:
-                    held = block;
-                    held.position = {x:4.5,y:0};
-                    block = new Block;
-                    holding = 1;
-                    break;
+        if(this.swapped == 0){
+            this.swapped=1;
+            if(holding == null){
+                block.pos = {x:4.5,y:0};
+                holding = block;
+                block = new Block;
             }
-            this.holding=1;
-            held.holding=1;
-        }
-    }
-    draw(){
-        for(let y=0;y<this.solid.length;y++){
-            for(let x=0;x<this.solid[y].length;x++){
-                switch(this.solid[y][x]){
-                    case 1:
-                        try{
-                            if(grid[this.position.y+y][Math.floor(this.position.x)+x-1].type!=""){
-                                grid[this.position.y+y][Math.floor(this.position.x)+x-1].locked=1;
-                                this.locked = 1;
-                                break;
-                            }
-                            if(grid[this.position.y+y][Math.floor(this.position.x)+x-1].type==""){
-                                grid[this.position.y+y][Math.floor(this.position.x)+x-1].type=this.type;
-                            }
-                        }
-                        finally{
-                            break;
-                        }
-                }
+            else{
+                block.pos = {x:4.5,y:0};
+                [block,holding] = [holding,block];                
             }
         }
     }
-    undraw(){
-        if(!this.locked){
-            for(let y=0;y<this.solid.length;y++){
-                for(let x=0;x<this.solid[y].length;x++){
-                    switch(this.solid[y][x]){
-                        case 1:
-                            try{
-                                grid[this.position.y+y][Math.floor(this.position.x)+x-1].type="";
-                            }
-                            finally{
-                                break;
-                            }
+    move(dir){
+        if(this.locked==0){
+            switch(dir){
+                case "down":
+                    this.pos.y++;
+                    if(this.collide()==1){
+                        this.pos.y--;
+                        this.locked=1;
                     }
-                }
+                    break;
+                case "right":
+                    this.pos.x++;
+                    if(this.collide()==1){
+                        this.pos.x--;
+                    }
+                    break;
+                case "left":
+                    this.pos.x--;
+                    if(this.collide()==1){
+                        this.pos.x++;
+                    }
+                    break;
             }
+            updateCanvas();
         }
-    }
-    getSolid(array){
-
-        if(xoff!=undefined&&(this.position.y!=0)){
-            this.position.x-=xoff;
-        }
-        if(yoff!=undefined&&(this.position.y!=0)){
-            this.position.y-=yoff;
-        }
-
-        let yabove = 0;
-        let ybelow = 0;
-        let xleft = 0;
-        let xright = 0;
-
-        yoff = 0;
-        xoff = 0;
-        for(let y = 0;y<array.length;y++){
-            let empty = array[y].every(checkZero);
-            if(empty){
-                if(y>this.center.y){
-                    ybelow++;
-                }
-                else if(y<this.center.y){
-                    yabove++;
-                }
+    };
+    rotate(dir){
+        if(this.locked==0){
+            switch(dir){
+                case "cw":
+                    this.grid = transposeArray(this.grid);
+                    this.grid.forEach(arr => {arr.reverse()});
+                    if(this.collide()==1){
+                        this.grid.forEach(arr => {arr.reverse()});
+                        this.grid = transposeArray(this.grid);
+                    }
+                    break;
+                case "ccw":
             }
+            updateCanvas();
         }
-        array = transposeArray(array);
-        for(let y = 0;y<array.length;y++){
-            let empty = array[y].every(checkZero);
-            if(empty){
-                if(y>this.center.x){
-                    xright++;
-                }
-                else if(y<this.center.x){
-                    xleft++;
-                }
-            }
-        }
-        array = transposeArray(array);
-
-        for(let y = 0;y<array.length;y++){
-            let empty = array[y].every(checkZero);
-            array.splice(y,empty);
-            y-=empty;
-        }
-        array = transposeArray(array);
-        for(let y = 0;y<array.length;y++){
-            let empty = array[y].every(checkZero);
-            array.splice(y,empty);
-            y-=empty;
-        }
-        array = transposeArray(array);
-
-        (yabove>ybelow)&&(ybelow>0)?yoff = ybelow - yabove:0;
-        (xright>xleft)? (xleft>0)? xoff = xright-xleft : xoff = xright-xleft-1 : 0;
-        (xleft>xright)? (xright>0)? xoff = xleft-xright+1 : xoff = xleft-xright : 0; 
-
-        this.position.y+=yoff;
-        this.position.x+=xoff;
-
-        return array;
     }
 }
 
-var grid = Array(20).fill(Array(10).fill({type:"",locked:0}));
+function clearLines(){
+    let lines=0; 
+    for(let y=0;y<grid.length;y++){
+        let total = 0;
+        for(let x in grid[y]){
+            total += grid[y][x].type==="";
+        }
+        if(total==0){
+            lines += 1;
+            grid.splice(y,1);
+            grid.unshift([{type:""},{type:""},{type:""},{type:""},{type:""},{type:""},{type:""},{type:""},{type:""},{type:""}]);
+            y--;
+        }
+    }
+    totalLines += lines;
+}
+
+const grid = new Array(20)
+for (let i = 0; i < 20; i++) {
+    grid[i] = new Array(10);
+    for (let j = 0; j < 10; j++) {
+        grid[i][j] = {type:""};
+    }
+}
 
 function draw(){
-    block.draw();
-    for(y in grid){
-        for(x in grid[y]){
-            switch(grid[y][x].type){
-                case "I": ctx.drawImage(cyanBlock,x*scale,y*scale,30,30); break;
-                case "O": ctx.drawImage(yellowBlock,x*scale,y*scale,30,30); break;
-                case "T": ctx.drawImage(purpleBlock,x*scale,y*scale,30,30); break;
-                case "S": ctx.drawImage(redBlock,x*scale,y*scale,30,30); break;
-                case "Z": ctx.drawImage(greenBlock,x*scale,y*scale,30,30); break;
-                case "J": ctx.drawImage(blueBlock,x*scale,y*scale,30,30); break;
-                case "L": ctx.drawImage(orangeBlock,x*scale,y*scale,30,30); break;
-                case "": ctx.drawImage(emptyBlock,x*scale,y*scale,30,30); break;
+    grid.forEach((row,y)=>{
+        row.forEach((item,x)=>{
+            switch(item.type){
+                case "I": ctx.drawImage(cyanBlock,x,y,1,1); break;
+                case "O": ctx.drawImage(yellowBlock,x,y,1,1); break;
+                case "T": ctx.drawImage(purpleBlock,x,y,1,1); break;
+                case "S": ctx.drawImage(redBlock,x,y,1,1); break;
+                case "Z": ctx.drawImage(greenBlock,x,y,1,1); break;
+                case "J": ctx.drawImage(blueBlock,x,y,1,1); break;
+                case "L": ctx.drawImage(orangeBlock,x,y,1,1); break;
+                case "": ctx.drawImage(emptyBlock,x,y,1,1); break;
             };
-        }
-    };
-    block.undraw();
+        });
+    });
 };
+
+function updateCanvas(){
+    block.addToGrid(block.type);
+    draw();
+    if(block.locked==0){
+        block.addToGrid("");
+    }
+}
 
 var handleKeyDown = function (event){
     keyValue = event.key;
@@ -404,20 +288,10 @@ var handleKeyDown = function (event){
                 block.rotate("cw");
             }
             break;
-        case "a":
-            if(!paused){
-                block.move("left");
-            }
-            break;
         case "s":
         case "ArrowDown":
             if(!paused){
                 speed = 70;
-            }
-            break;
-        case "d": 
-            if(!paused){
-                block.move("right");
             }
             break;
         case " ":
@@ -434,7 +308,7 @@ var handleKeyDown = function (event){
             }
             break;
     };
-};  
+};
 
 var handleKeyUp = function (event){
     keyValue = event.key;
@@ -446,64 +320,37 @@ var handleKeyUp = function (event){
     }
 };  
 
-function clearLines(){
-    let lines=0; 
-    for(let y=0;y<grid.length;y++){
-        let total = 0;
-        for(let x in grid[y]){
-            total += grid[y][x].locked;
-        }
-        if(total==10){
-            lines += 1;
-            grid.splice(y,1);
-            grid.unshift([{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0},{type:"",locked:0}]);
-            y--;
-        }
-    }
-    totallines+=lines;
-    score+=(lines**2)*10;
-}
-
-
 window.addEventListener('keydown', handleKeyDown, false);
 window.addEventListener('keyup', handleKeyUp, false);
 
-block = new Block;
-var holding = 0;
-var held = block;
-
 KeyboardController({
-    37: function(){if(!paused){block.move("left"),draw()}},
-    65: function(){if(!paused){block.move("left"),draw()}},
-    39: function(){if(!paused){block.move("right"),draw()}},
-    68: function(){if(!paused){block.move("right"),draw()}},
+    37: function(){if(!paused){block.move("left")}},
+    65: function(){if(!paused){block.move("left")}},
+    39: function(){if(!paused){block.move("right")}},
+    68: function(){if(!paused){block.move("right")}},
 }, 150);
 
 async function startGame(){
-    draw();
     while(!block.locked){
         await sleep(speed);
         if(!paused){
             block.move("down");
-            draw();
         }
     }
-    if(block.locked){
-        draw();
-        clearLines();
-        block = new Block;
-        held.holding=0;
-        gameOver();
+    resetGame();
+}
+
+function resetGame(){
+    clearLines();
+    block = new Block;
+    if(block.collide()==1){
+        updateCanvas();
+        alert("GAME OVER");
+    }
+    else{
+        updateCanvas();
         startGame();
     }
 }
 
-function gameOver(){
-    for(i in grid[0]){
-        if(grid[0][i].locked){
-            alert(`Game Over | Score: ${score}`);
-        }
-    }
-}
-
-startGame();
+resetGame();
