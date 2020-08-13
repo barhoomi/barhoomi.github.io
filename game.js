@@ -344,8 +344,17 @@ function resetGame(){
     clearLines();
     block = new Block;
     if(block.collide()==1){
-        updateCanvas();
         alert("GAME OVER");
+        for (let i = 0; i < 20; i++) {
+            grid[i] = new Array(10);
+            for (let j = 0; j < 10; j++) {
+                grid[i][j] = {type:""};
+            }
+        }
+        score = 0;
+        totalLines = 0;
+        holding = null;
+        resetGame();
     }
     else{
         updateCanvas();
