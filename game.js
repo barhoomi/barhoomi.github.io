@@ -170,7 +170,7 @@ class Block {
     };
     drop(){
         while(this.collide()==0){
-            this.move("down");
+            this.move(0,1);
         }
     };
     hold(){
@@ -187,31 +187,19 @@ class Block {
             }
         }
     }
-    move(dir){
+    move(x,y){
         if(this.locked==0){
-            switch(dir){
-                case "down":
-                    this.pos.y++;
-                    if(this.collide()==1){
-                        this.pos.y--;
-                        this.locked=1;
-                    }
-                    break;
-                case "right":
-                    this.pos.x++;
-                    if(this.collide()==1){
-                        this.pos.x--;
-                    }
-                    break;
-                case "left":
-                    this.pos.x--;
-                    if(this.collide()==1){
-                        this.pos.x++;
-                    }
-                    break;
-            }
+            this.pos.y+=y;
+            this.pos.x+=x;
+            if(this.collide()==1){
+                this.pos.y-=y;
+                this.pos.x-=x;
+                if(x == 0){
+                    this.locked=1;
+                }
+            };
             updateCanvas();
-        }
+        };
     };
     rotate(dir){
         if(this.locked==0){
@@ -233,6 +221,15 @@ class Block {
 
 function clearLines(){
     let lines=0; 
+    let clear = [];
+    grid.forEach((row,y)=>{
+        if(row.some(x => x.type === "")==0){
+            clear.push(y);
+        }
+    });
+    clear.forEach(y =>{
+        grid[y];
+    })
     for(let y=0;y<grid.length;y++){
         let total = 0;
         for(let x in grid[y]){
@@ -246,6 +243,7 @@ function clearLines(){
         }
     }
     totalLines += lines;
+    return lines;
 }
 
 const grid = new Array(20)
@@ -318,7 +316,7 @@ var handleKeyDown = function (event){
                 }
                 else{
                     pauseCountDownRunning = 1;
-                    document.querySelector(".paused h1").innerHTML = "Paused"
+                    document.querySelector(".paused h1").innerHTML = "Game <br> paused"
                     document.querySelector(".paused").style.display = "inline";
                     document.querySelector(".paused p").style.display = "inline";
                     document.querySelector(".canvas").style.filter = "brightness(0.5)"
@@ -349,42 +347,66 @@ window.addEventListener('keydown', handleKeyDown, false);
 window.addEventListener('keyup', handleKeyUp, false);
 
 KeyboardController({
-    37: function(){if(!paused){block.move("left")}},
-    65: function(){if(!paused){block.move("left")}},
-    39: function(){if(!paused){block.move("right")}},
-    68: function(){if(!paused){block.move("right")}},
+    37: function(){if(!paused){block.move(-1,0)}},
+    65: function(){if(!paused){block.move(-1,0)}},
+    39: function(){if(!paused){block.move(1,0)}},
+    68: function(){if(!paused){block.move(1,0)}},
 }, 150);
 
 async function startGame(){
     while(!block.locked){
         await sleep(speed);
         if(!paused){
-            block.move("down");
+            block.move(0,1);
         }
     }
     resetGame();
 }
 
 function resetGame(){
-    clearLines();
-    block = new Block;
-    if(block.collide()==1){
-        alert("GAME OVER");
-        for (let i = 0; i < 20; i++) {
-            grid[i] = new Array(10);
-            for (let j = 0; j < 10; j++) {
-                grid[i][j] = {type:""};
+    if(clearLines()>0){
+        setTimeout(function(){
+            block = new Block;
+            if(block.collide()==1){
+                alert("GAME OVER");
+                for (let i = 0; i < 20; i++) {
+                    grid[i] = new Array(10);
+                    for (let j = 0; j < 10; j++) {
+                        grid[i][j] = {type:""};
+                    }
+                }
+                score = 0;
+                totalLines = 0;
+                holding = null;
+                resetGame();
             }
-        }
-        score = 0;
-        totalLines = 0;
-        holding = null;
-        resetGame();
+            else{
+                updateCanvas();
+                startGame();
+            }
+        },250)
     }
     else{
-        updateCanvas();
-        startGame();
+        block = new Block;
+        if(block.collide()==1){
+            alert("GAME OVER");
+            for (let i = 0; i < 20; i++) {
+                grid[i] = new Array(10);
+                for (let j = 0; j < 10; j++) {
+                    grid[i][j] = {type:""};
+                }
+            }
+            score = 0;
+            totalLines = 0;
+            holding = null;
+            resetGame();
+        }
+        else{
+            updateCanvas();
+            startGame();
+        }
     }
+    
 }
 
 resetGame();
