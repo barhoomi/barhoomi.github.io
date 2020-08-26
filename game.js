@@ -9,6 +9,8 @@ var paused = 0;
 var score = 0;
 var totalLines = 0;
 var holding = null;
+var xoffset = 1;
+var yoffset = 1;
 
 var pauseCountDownRunning = 0;
 
@@ -62,6 +64,7 @@ function transposeArray(array){
 
     return newArray;
 }
+
 // Keyboard input with customisable repeat (set to 0 for no key repeat)
 //
 function KeyboardController(keys, repeat) {
@@ -202,12 +205,26 @@ class Block {
         };
     };
     rotate(dir){
+        let pos = this.pos.x;
         if(this.locked==0){
             switch(dir){
                 case "cw":
                     this.grid = transposeArray(this.grid);
                     this.grid.forEach(arr => {arr.reverse()});
                     if(this.collide()==1){
+                        let i = -1;
+                        for(let n=0;n<4;n++){
+                            this.pos.x+=i;
+                            if(this.collide()==1){
+                                i > 0 ? i = -(Math.abs(i)+1) : i = Math.abs(i)+1;
+                            }
+                            else{
+                                break;
+                            }
+                        }
+                    }
+                    if(this.collide()==1){
+                        this.pos.x=pos;
                         this.grid.forEach(arr => {arr.reverse()});
                         this.grid = transposeArray(this.grid);
                     }
@@ -219,7 +236,31 @@ class Block {
     }
 }
 
+var brightness = 1;
+function animateLineClear(array){
+    ctx.filter = `brightness(${brightness})`;
+    array.forEach(y =>{
+        grid[y].forEach((item,x) =>{
+            switch(item.type){
+                case "I": ctx.drawImage(cyanBlock,x,y,1,1); break;
+                case "O": ctx.drawImage(yellowBlock,x,y,1,1); break;
+                case "T": ctx.drawImage(purpleBlock,x,y,1,1); break;
+                case "S": ctx.drawImage(redBlock,x,y,1,1); break;
+                case "Z": ctx.drawImage(greenBlock,x,y,1,1); break;
+                case "J": ctx.drawImage(blueBlock,x,y,1,1); break;
+                case "L": ctx.drawImage(orangeBlock,x,y,1,1); break;
+                case "": ctx.drawImage(emptyBlock,x,y,1,1); break;
+            };
+        });
+    });
+    if(brightness<5){
+        brightness+=0.1;
+        animateLineClear(array);
+    }
+}
+
 function clearLines(){
+    brightness = 1;
     let lines=0; 
     let clear = [];
     grid.forEach((row,y)=>{
@@ -227,9 +268,10 @@ function clearLines(){
             clear.push(y);
         }
     });
-    clear.forEach(y =>{
-        grid[y];
-    })
+    if(clear.length>0){
+        animateLineClear(clear);
+    }
+    ctx.filter = "none";
     for(let y=0;y<grid.length;y++){
         let total = 0;
         for(let x in grid[y]){
@@ -254,7 +296,7 @@ for (let i = 0; i < 20; i++) {
     }
 }
 
-function draw(){
+function draw(grid){
     grid.forEach((row,y)=>{
         row.forEach((item,x)=>{
             switch(item.type){
@@ -273,7 +315,7 @@ function draw(){
 
 function updateCanvas(){
     block.addToGrid(block.type);
-    draw();
+    draw(grid);
     if(block.locked==0){
         block.addToGrid("");
     }
@@ -351,7 +393,7 @@ KeyboardController({
     65: function(){if(!paused){block.move(-1,0)}},
     39: function(){if(!paused){block.move(1,0)}},
     68: function(){if(!paused){block.move(1,0)}},
-}, 150);
+}, 125);
 
 async function startGame(){
     while(!block.locked){
@@ -365,7 +407,7 @@ async function startGame(){
 
 function resetGame(){
     if(clearLines()>0){
-        setTimeout(function(){
+        setTimeout(() => {
             block = new Block;
             if(block.collide()==1){
                 alert("GAME OVER");
@@ -384,7 +426,7 @@ function resetGame(){
                 updateCanvas();
                 startGame();
             }
-        },250)
+        }, 150);
     }
     else{
         block = new Block;
