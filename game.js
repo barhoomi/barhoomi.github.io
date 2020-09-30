@@ -24,6 +24,8 @@ let greenBlock = document.getElementById("green");
 let orangeBlock = document.getElementById("orange");
 let yellowBlock = document.getElementById("yellow");
 let emptyBlock = document.getElementById("empty");
+let greyBlock = document.getElementById("grey");
+
 
 ctx.imageSmoothingEnabled = false;
 
