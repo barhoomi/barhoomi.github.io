@@ -3,8 +3,11 @@ canvas = document.querySelector('.canvas')
 var ctx = canvas.getContext('2d');
 ctx.scale(30,30);
 
+hcanvas = document.querySelector('.hold-canvas')
+var hctx = hcanvas.getContext('2d');
+
 var speed = 250;
-var paused = 0;
+var paused = 1;
 
 var score = 0;
 var totalLines = 0;
@@ -28,6 +31,7 @@ let greyBlock = document.getElementById("grey");
 
 
 ctx.imageSmoothingEnabled = false;
+hctx.imageSmoothingEnabled = false;
 
 
 // GENERAL FUNCTIONS
@@ -113,13 +117,13 @@ function KeyboardController(keys, repeat) {
 };
 
 const tetromino = [
-{type:"I",grid:[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],center:{x:1.5,y:1.5}},
-{type:"O",grid:[[1,1],[1,1]],center:{x:0.5,y:0.5}},
-{type:"T",grid:[[0,1,0],[1,1,1],[0,0,0]],center:{x:1,y:1}},
-{type:"S",grid:[[0,1,1],[1,1,0],[0,0,0]],center:{x:1,y:1}},
-{type:"Z",grid:[[1,1,0],[0,1,1],[0,0,0]],center:{x:1,y:1}},
-{type:"J",grid:[[1,0,0],[1,1,1],[0,0,0]],center:{x:1,y:1}},
-{type:"L",grid:[[0,0,1],[1,1,1],[0,0,0]],center:{x:1,y:1}},
+{type:"I",grid:[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]]},
+{type:"O",grid:[[1,1],[1,1]]},
+{type:"T",grid:[[0,1,0],[1,1,1],[0,0,0]]},
+{type:"S",grid:[[0,1,1],[1,1,0],[0,0,0]]},
+{type:"Z",grid:[[1,1,0],[0,1,1],[0,0,0]]},
+{type:"J",grid:[[1,0,0],[1,1,1],[0,0,0]]},
+{type:"L",grid:[[0,0,1],[1,1,1],[0,0,0]]},
 ];
 
 var queue = [];
@@ -139,7 +143,6 @@ class Block {
         addQueue();
         this.tetromino = queue.shift();
         this.type = this.tetromino.type;
-        this.center = this.tetromino.center;
         this.pos = {x:4.5,y:0}
         this.grid = [...this.tetromino.grid];
         this.locked = 0;
@@ -297,6 +300,8 @@ for (let i = 0; i < 20; i++) {
         grid[i][j] = {type:""};
     }
 }
+
+
 
 function draw(grid){
     grid.forEach((row,y)=>{

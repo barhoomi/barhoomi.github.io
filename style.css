@@ -41,6 +41,11 @@ body{
     border:white 3px solid;
     filter: brightness(1);
 }
+.hold-canvas{
+    margin: 5px;
+    border:white 3px solid;
+    filter: brightness(1);
+}
 
 .sprites{
     display:none;
@@ -49,20 +54,11 @@ body{
 .hold{
     padding-top: 1vh;
     box-sizing: border-box;
-    left: 25vw;
-    top: 12.5vh;
     display: flex;
     flex-direction: column;
-    font-size: 1.8vw;
+    font-size: 2.25vw;
     font-family: pixel;
     color: white;
     position: absolute;
-    border: 3px white solid;
     text-align: center;
-    display:none;
-}
-
-#hold-canvas{
-    margin-top:1vh;
-    margin-left: 1.5vw;
 }
