@@ -3,11 +3,11 @@ canvas = document.querySelector('.canvas')
 var ctx = canvas.getContext('2d');
 ctx.scale(30,30);
 
-hcanvas = document.querySelector('.hold-canvas')
-var hctx = hcanvas.getContext('2d');
+hCanvas = document.querySelector('.hold-canvas')
+var hctx = hCanvas.getContext('2d');
 
 var speed = 250;
-var paused = 1;
+var paused = 0;
 
 var score = 0;
 var totalLines = 0;
@@ -117,13 +117,13 @@ function KeyboardController(keys, repeat) {
 };
 
 const tetromino = [
-{type:"I",grid:[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]]},
-{type:"O",grid:[[1,1],[1,1]]},
-{type:"T",grid:[[0,1,0],[1,1,1],[0,0,0]]},
-{type:"S",grid:[[0,1,1],[1,1,0],[0,0,0]]},
-{type:"Z",grid:[[1,1,0],[0,1,1],[0,0,0]]},
-{type:"J",grid:[[1,0,0],[1,1,1],[0,0,0]]},
-{type:"L",grid:[[0,0,1],[1,1,1],[0,0,0]]},
+{type:"I",grid:[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],effgrid:[["I","I","I","I"]]},
+{type:"O",grid:[[1,1],[1,1]],effgrid:[["O","O"],["O","O"]]},
+{type:"T",grid:[[0,1,0],[1,1,1],[0,0,0]],effgrid:[[0,"T",0],["T","T","T"]]},
+{type:"S",grid:[[0,1,1],[1,1,0],[0,0,0]],effgrid:[[0,"S","S"],["S","S",0]]},
+{type:"Z",grid:[[1,1,0],[0,1,1],[0,0,0]],effgrid:[["Z","Z",0],[0,"Z","Z"]]},
+{type:"J",grid:[[1,0,0],[1,1,1],[0,0,0]],effgrid:[["J",0,0],["J","J","J"]]},
+{type:"L",grid:[[0,0,1],[1,1,1],[0,0,0]],effgrid:[[0,0,"L"],["L","L","L"]]},
 ];
 
 var queue = [];
@@ -194,6 +194,7 @@ class Block {
                 [block,holding] = [holding,block];                
             }
         }
+        updateHoldCanvas();
     }
     move(x,y){
         if(this.locked==0){
@@ -303,18 +304,25 @@ for (let i = 0; i < 20; i++) {
 
 
 
-function draw(grid){
+function draw(grid,context,scale,xoff,yoff){
     grid.forEach((row,y)=>{
-        row.forEach((item,x)=>{
-            switch(item.type){
-                case "I": ctx.drawImage(cyanBlock,x,y,1,1); break;
-                case "O": ctx.drawImage(yellowBlock,x,y,1,1); break;
-                case "T": ctx.drawImage(purpleBlock,x,y,1,1); break;
-                case "S": ctx.drawImage(redBlock,x,y,1,1); break;
-                case "Z": ctx.drawImage(greenBlock,x,y,1,1); break;
-                case "J": ctx.drawImage(blueBlock,x,y,1,1); break;
-                case "L": ctx.drawImage(orangeBlock,x,y,1,1); break;
-                case "": ctx.drawImage(emptyBlock,x,y,1,1); break;
+        row.forEach((cell,x)=>{
+            let item;
+            if(cell.type==undefined){
+                item = cell;
+            }
+            else{
+                item = cell.type;
+            }
+            switch(item){
+                case "I": context.drawImage(cyanBlock,(x*scale)+xoff,(y*scale)+yoff,scale,scale); break;
+                case "O": context.drawImage(yellowBlock,(x*scale)+xoff,(y*scale)+yoff,scale,scale); break;
+                case "T": context.drawImage(purpleBlock,(x*scale)+xoff,(y*scale)+yoff,scale,scale); break;
+                case "S": context.drawImage(redBlock,(x*scale)+xoff,(y*scale)+yoff,scale,scale); break;
+                case "Z": context.drawImage(greenBlock,(x*scale)+xoff,(y*scale)+yoff,scale,scale); break;
+                case "J": context.drawImage(blueBlock,(x*scale)+xoff,(y*scale)+yoff,scale,scale); break;
+                case "L": context.drawImage(orangeBlock,(x*scale)+xoff,(y*scale)+yoff,scale,scale); break;
+                case "": context.drawImage(emptyBlock,(x*scale)+xoff,(y*scale)+yoff,scale,scale); break;
             };
         });
     });
@@ -322,11 +330,21 @@ function draw(grid){
 
 function updateCanvas(){
     block.addToGrid(block.type);
-    draw(grid);
+    draw(grid,ctx,1,0,0);
     if(block.locked==0){
         block.addToGrid("");
     }
 }
+
+
+function updateHoldCanvas(){
+    hctx.fillstyle="black";
+    hctx.fillRect(0,0,hCanvas.width,hCanvas.height);
+    let height = holding.tetromino.effgrid.length;
+    let width = holding.tetromino.effgrid[0].length;
+    draw(holding.tetromino.effgrid,hctx,30,((120-(width*30))/2)+10,((90-(height*30))/2));
+}
+
 
 var handleKeyDown = function (event){
     keyValue = event.key;

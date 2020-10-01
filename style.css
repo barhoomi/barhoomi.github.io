@@ -37,7 +37,7 @@ body{
 }
 
 .canvas{
-    margin-top:12.5vh;
+    margin-top: 8vh;
     border:white 3px solid;
     filter: brightness(1);
 }
@@ -52,11 +52,12 @@ body{
 }
 
 .hold{
-    padding-top: 1vh;
+    margin-left: 28vw;
+    margin-top: 8vh;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    font-size: 2.25vw;
+    font-size: 2vw;
     font-family: pixel;
     color: white;
     position: absolute;
