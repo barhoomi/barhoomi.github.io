@@ -338,11 +338,15 @@ function updateCanvas(){
 
 
 function updateHoldCanvas(){
-    hctx.fillstyle="black";
-    hctx.fillRect(0,0,hCanvas.width,hCanvas.height);
+    resetHoldCanvas();
     let height = holding.tetromino.effgrid.length;
     let width = holding.tetromino.effgrid[0].length;
     draw(holding.tetromino.effgrid,hctx,30,((120-(width*30))/2)+10,((90-(height*30))/2));
+}
+
+function resetHoldCanvas(){
+    hctx.fillstyle="black";
+    hctx.fillRect(0,0,hCanvas.width,hCanvas.height);
 }
 
 
@@ -445,6 +449,7 @@ function resetGame(){
                 score = 0;
                 totalLines = 0;
                 holding = null;
+                resetHoldCanvas();
                 resetGame();
             }
             else{
@@ -466,6 +471,7 @@ function resetGame(){
             score = 0;
             totalLines = 0;
             holding = null;
+            resetHoldCanvas();
             resetGame();
         }
         else{
