@@ -20,46 +20,89 @@ body{
 
 
 .screen{
-    z-index: 1;
+    margin-top: 10vh;
     display: flex;
     justify-content: center;
 }
 
+.game{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.right{
+    flex-basis: 10%;
+}
+
 .paused{
-    display:none;
+    display: none;
     position: absolute;
-    color: white;
-    margin-top: 20%;
+    margin-bottom: 10vh;
     z-index: 2;
-    font-size: 18px;
+
+    font-size: 1.2vw;
+    color: white;
     font-family: pixel;
     text-align: center;
 }
 
 .canvas{
-    margin-top: 8vh;
     border:white 3px solid;
-    filter: brightness(1);
+    z-index: 1;
 }
 .hold-canvas{
-    margin: 5px;
+    margin-top: 2vh;
     border:white 3px solid;
-    filter: brightness(1);
 }
 
 .sprites{
     display:none;
 }
 
-.hold{
-    margin-left: 28vw;
-    margin-top: 8vh;
+.left{
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+    flex-basis: 10%;
+}
+
+.right{
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    font-size: 2vw;
+    font-size: 1.7vw;
     font-family: pixel;
     color: white;
-    position: absolute;
     text-align: center;
+    margin-left: 2vw;
+}
+
+.next-canvas{
+    margin-right: 1vw;
+    margin-top: 2vh;
+    border:white 3px solid;
+}
+
+.hold{
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    font-size: 1.7vw;
+    font-family: pixel;
+    color: white;
+    text-align: center;
+    flex-basis: 70%;
+    margin-right: 2vw;
+}
+
+.scores{
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-size: 1.2vw;
+    font-family: pixel;
+    color: white;
+    flex-basis: 20%;
 }

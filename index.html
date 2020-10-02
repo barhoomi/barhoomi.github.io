@@ -7,16 +7,29 @@
     <script defer src="./game.js"></script> 
 </head>
 <body>
-    <span class="hold">
-        Hold:
-        <canvas class="hold-canvas" width="140" height="90"></canvas>
-    </span>
     <div class="screen">
-        <span class = "paused">
-            <h1 class = "unselectable">Game <br> paused</h1>
-            <p class = "unselectable">press p to resume</p>
-        </span>
-        <canvas class="canvas" height=600 width=300></canvas>
+        <div class = "left">
+            <div class="hold">
+                Hold:
+                <canvas class="hold-canvas" width="140" height="90"></canvas>
+            </div>
+            <div class = "scores">
+                <span class="score">Score:</span>
+                <span class="level">Level:</span>
+                <span class="lines">Lines:</span>
+            </div>
+        </div>
+        <div class="game">
+            <canvas class="canvas" height=600 width=300></canvas>
+            <div class = "paused">
+                <h1 class = "unselectable">Game <br> paused</h1>
+                <p class = "unselectable">press p to resume</p>
+            </div>
+        </div>
+        <div class = "right">
+            Next:
+            <canvas class="next-canvas" width="140" height="270"></canvas>
+        </div>
     </div>
     <div class="sprites">
         <img id="red" src="./images/red.png">

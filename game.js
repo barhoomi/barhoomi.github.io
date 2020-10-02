@@ -6,6 +6,10 @@ ctx.scale(30,30);
 hCanvas = document.querySelector('.hold-canvas')
 var hctx = hCanvas.getContext('2d');
 
+nCanvas = document.querySelector('.next-canvas')
+var nctx = nCanvas.getContext('2d');
+
+var level = 1;
 var speed = 250;
 var paused = 0;
 
@@ -16,6 +20,7 @@ var xoffset = 1;
 var yoffset = 1;
 
 var pauseCountDownRunning = 0;
+var nextCanvasInit = 0;
 
 //Sprites
 
@@ -32,6 +37,7 @@ let greyBlock = document.getElementById("grey");
 
 ctx.imageSmoothingEnabled = false;
 hctx.imageSmoothingEnabled = false;
+nctx.imageSmoothingEnabled = false;
 
 
 // GENERAL FUNCTIONS
@@ -338,15 +344,28 @@ function updateCanvas(){
 
 
 function updateHoldCanvas(){
-    resetHoldCanvas();
+    resetCanvas(hctx,hCanvas);
     let height = holding.tetromino.effgrid.length;
     let width = holding.tetromino.effgrid[0].length;
     draw(holding.tetromino.effgrid,hctx,30,((120-(width*30))/2)+10,((90-(height*30))/2));
 }
 
-function resetHoldCanvas(){
-    hctx.fillstyle="black";
-    hctx.fillRect(0,0,hCanvas.width,hCanvas.height);
+function updateNextCanvas(){
+    resetCanvas(nctx,nCanvas);
+    let height1 = queue[0].effgrid.length;
+    let width1 = queue[0].effgrid[0].length;
+    let height2 = queue[1].effgrid.length;
+    let width2 = queue[1].effgrid[0].length;
+    let height3 = queue[2].effgrid.length;
+    let width3 = queue[2].effgrid[0].length;
+    draw(queue[0].effgrid,nctx,30,((120-(width1*30))/2)+10,((90-(height1*30))/2));
+    draw(queue[1].effgrid,nctx,30,((120-(width2*30))/2)+10,((90-(height2*30))/2)+90);
+    draw(queue[2].effgrid,nctx,30,((120-(width3*30))/2)+10,((90-(height3*30))/2)+180);
+}
+
+function resetCanvas(context,canvas){
+    context.fillstyle="black";
+    context.fillRect(0,0,canvas.width,canvas.height);
 }
 
 
@@ -424,62 +443,61 @@ KeyboardController({
     68: function(){if(!paused){block.move(1,0)}},
 }, 125);
 
+function updateScores(){
+    document.querySelector(".score").innerHTML = `Score: ${score}`;
+    document.querySelector(".level").innerHTML = `Level: ${level}`
+    document.querySelector(".lines").innerHTML = `Lines: ${totalLines}`
+}
+
+function resetGameVariables(){
+    for(let i = 0; i < 20; i++){
+        grid[i] = new Array(10);
+        for (let j = 0; j < 10; j++){
+            grid[i][j] = {type:""}
+        }
+    }
+    score = 0;
+    totalLines = 0;
+    holding = null;
+    nextCanvasInit = 0;
+    queue = [];
+    resetCanvas(hctx,hCanvas);
+    updateScores();
+}
+
 async function startGame(){
     while(!block.locked){
         await sleep(speed);
         if(!paused){
             block.move(0,1);
+            if(nextCanvasInit==0){
+                updateNextCanvas();
+                nextCanvasInit=1;
+            }
         }
     }
     resetGame();
 }
 
 function resetGame(){
+    let timeout = 0;
     if(clearLines()>0){
-        setTimeout(() => {
-            block = new Block;
-            if(block.collide()==1){
-                alert("GAME OVER");
-                for (let i = 0; i < 20; i++) {
-                    grid[i] = new Array(10);
-                    for (let j = 0; j < 10; j++) {
-                        grid[i][j] = {type:""};
-                    }
-                }
-                score = 0;
-                totalLines = 0;
-                holding = null;
-                resetHoldCanvas();
-                resetGame();
-            }
-            else{
-                updateCanvas();
-                startGame();
-            }
-        }, 150);
+        timeout = 150;
     }
-    else{
+    setTimeout(() => {
         block = new Block;
+        updateNextCanvas();
+        updateScores();
         if(block.collide()==1){
             alert("GAME OVER");
-            for (let i = 0; i < 20; i++) {
-                grid[i] = new Array(10);
-                for (let j = 0; j < 10; j++) {
-                    grid[i][j] = {type:""};
-                }
-            }
-            score = 0;
-            totalLines = 0;
-            holding = null;
-            resetHoldCanvas();
+            resetGameVariables();
             resetGame();
         }
         else{
             updateCanvas();
             startGame();
         }
-    }
-    
+    }, timeout);    
 }
 
 resetGame();
