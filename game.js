@@ -11,6 +11,8 @@ var nctx = nCanvas.getContext('2d');
 
 var level = 1;
 var speed = 250;
+var normalSpeed = 250;
+var hyperSpeed = 50;
 var paused = 0;
 
 var score = 0;
@@ -297,6 +299,8 @@ function clearLines(){
         }
     }
     totalLines += lines;
+    score += ((lines ** 2)*100)*level;
+    updateScores();
     return lines;
 }
 
@@ -368,20 +372,15 @@ function resetCanvas(context,canvas){
     context.fillRect(0,0,canvas.width,canvas.height);
 }
 
-
+var pressed = 0;
 var handleKeyDown = function (event){
     keyValue = event.key;
     switch(keyValue){
         case "w": 
         case "ArrowUp":
-            if(!paused){
+            if(!paused&&pressed==0){
                 block.rotate("cw");
-            }
-            break;
-        case "s":
-        case "ArrowDown":
-            if(!paused){
-                speed = 70;
+                pressed = 1;
             }
             break;
         case " ":
@@ -426,10 +425,15 @@ var handleKeyDown = function (event){
 var handleKeyUp = function (event){
     keyValue = event.key;
     switch(keyValue){
+        case "w": 
+        case "ArrowUp":
+            pressed = 0;
+            break;
         case "s":
         case "ArrowDown":
-            speed = 250;
+            speed = normalSpeed;
             break;
+        
     }
 };  
 
@@ -441,9 +445,16 @@ KeyboardController({
     65: function(){if(!paused){block.move(-1,0)}},
     39: function(){if(!paused){block.move(1,0)}},
     68: function(){if(!paused){block.move(1,0)}},
-}, 125);
+    40: function(){if(!paused){speed=hyperSpeed}},
+    83: function(){if(!paused){speed=hyperSpeed}}
+}, 110);
+
+
 
 function updateScores(){
+    level = 1+Math.floor(totalLines/25);
+    normalSpeed = 100 + Math.max(0,(170 - level*20));
+    speed = normalSpeed;
     document.querySelector(".score").innerHTML = `Score: ${score}`;
     document.querySelector(".level").innerHTML = `Level: ${level}`
     document.querySelector(".lines").innerHTML = `Lines: ${totalLines}`
