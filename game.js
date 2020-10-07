@@ -511,4 +511,6 @@ function resetGame(){
     }, timeout);    
 }
 
+//test
+
 resetGame();
