@@ -502,7 +502,12 @@ function resetGame(){
         if(block.collide()==1){
             alert("GAME OVER");
             resetGameVariables();
-            resetGame();
+            document.querySelector(".controls").style.display = "block";
+            document.querySelector(".button").style.display = "block";
+            document.querySelector(".startCountDown").innerHTML = "3";
+            resetCanvas(hctx,hCanvas);
+            resetCanvas(nctx,nCanvas);
+            resetCanvas(ctx,canvas);
         }
         else{
             updateCanvas();
@@ -511,6 +516,20 @@ function resetGame(){
     }, timeout);    
 }
 
+var startButton = document.querySelector(".button");
+
+startButton.addEventListener("click",()=>{
+    document.querySelector(".controls").style.display = "none";
+    document.querySelector(".button").style.display = "none";
+    document.querySelector(".startCountDown").style.display = "flex";
+    setTimeout(function(){document.querySelector(".startCountDown").innerHTML = "2";}, 1000);
+    setTimeout(function(){document.querySelector(".startCountDown").innerHTML = "1";}, 2000);
+    setTimeout(function(){
+        document.querySelector(".startCountDown").style.display = "none";
+        resetGame();
+    }, 3000);
+})
+
 //test
 
-resetGame();
+// resetGame();

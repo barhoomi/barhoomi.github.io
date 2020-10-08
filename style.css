@@ -40,8 +40,7 @@ body{
     position: absolute;
     margin-bottom: 10vh;
     z-index: 2;
-
-    font-size: 1.2vw;
+    font-size: 2vh;
     color: white;
     font-family: pixel;
     text-align: center;
@@ -110,10 +109,39 @@ body{
     border: white solid 2px;
 }
 
-.controls{
-    margin-top: 2vh;
-    color: grey;
+.start{
+    position: absolute;
+    margin-top: 10vh;
+    z-index: 2;
+}
+
+.button{
+    background-color: #333333;
+    position: absolute;
+    font-size: 4vh;
+    color: white;
     font-family: pixel;
-    font-size:1.4vh;
     text-align: center;
+    border: 3px #555555 solid;
+}
+
+.button:hover{
+    background-color: #555555;
+    border: 3px #777777 solid;
+}
+
+.controls{
+    margin-top: 15vh;
+    color: white;
+    font-family: pixel;
+    font-size:1.5vh;
+    text-align: center;
+}
+
+.startCountDown{
+    display: none;
+    color: white;
+    font-family: pixel;
+    font-size:5vh;
+    margin-bottom: 25vh;
 }
